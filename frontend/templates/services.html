@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SkillBridge — Detailed Services</title>
+  <link rel="stylesheet" href="../static/css/style.css">
+  <link rel="stylesheet" href="../static/css/home.css">
+  <link rel="stylesheet" href="../static/css/dashboard.css">
+  <script src="../static/js/theme.js"></script>
+  <style>
+    /* CUSTOM SERVICES STYLING */
+    .services-page-header {
+      padding: 100px 0 60px;
+      text-align: center;
+      background: var(--nav-bg);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .services-page-header h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: -1px;
+    }
+
+    .services-page-header .subtitle {
+      font-size: 20px;
+      color: var(--muted);
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .service-section {
+      padding: 35px 0;
+    }
+
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-title-wrap h2 {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title-wrap h2::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 32px;
+      background: var(--primary);
+      border-radius: 4px;
+    }
+
+    /* Horizontal Slider Logic */
+    .services-slider-container {
+      position: relative;
+      margin: 0 -12px;
+    }
+
+    .services-slider {
+      display: flex;
+      gap: 24px;
+      overflow-x: auto;
+      padding: 12px 12px 30px;
+      scroll-behavior: smooth;
+      scrollbar-width: none; /* Hide scrollbar Firefox */
+      -ms-overflow-style: none; /* Hide scrollbar IE/Edge */
+    }
+
+    .services-slider::-webkit-scrollbar {
+      display: none; /* Hide scrollbar Chrome/Safari */
+    }
+
+    .service-detailed-card {
+      flex: 0 0 calc(25% - 18px); /* 4 cards on desktop */
+      min-width: 280px;
+      background: var(--card);
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+
+    .service-detailed-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+      border-color: var(--primary);
+    }
+
+    .detailed-img-wrap {
+      width: 100%;
+      height: 180px;
+      position: relative;
+    }
+
+    .detailed-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .detailed-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .detailed-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .detailed-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      flex: 1;
+    }
+
+    .view-pro-btn {
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .view-pro-btn:hover {
+      opacity: 0.9;
+      transform: scale(0.98);
+    }
+
+    /* Scroll Indicators */
+    .scroll-hint {
+      display: none;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: -10px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 1200px) {
+      .service-detailed-card {
+        flex: 0 0 calc(33.333% - 16px);
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .service-detailed-card {
+        flex: 0 0 calc(50% - 12px);
+      }
+      .scroll-hint { display: block; }
+    }
+
+    @media (max-width: 600px) {
+      .service-detailed-card {
+        flex: 0 0 100%;
+      }
+      .services-page-header h1 { font-size: 36px; }
+      .section-title-wrap h2 { font-size: 24px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div class="mobile-overlay" id="mobile-overlay"></div>
+
+  <header class="top-navbar">
+    <!-- Left: Brand & Main Links -->
+    <div style="display: flex; align-items: center; gap: 24px;">
+      <a href="home.html" class="navbar-brand">
+        <div class="logo-mark">SB</div>
+        SkillBridge
+      </a>
+      <nav class="navbar-links">
+        <a class="nav-item" href="home.html">Home</a>
+        <a class="nav-item active" href="services.html">Services</a>
+        <a class="nav-item" href="listing.html">Workers</a>
+        <a class="nav-item" href="contact.html">Contact</a>
+      </nav>
+    </div>
+
+    <!-- Center: Persistent Search Bar -->
+    <div class="navbar-search">
+      <div class="navbar-search-container">
+        <svg class="navbar-search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" placeholder="Search services..." id="nav-search-input">
+        <div id="nav-search-dropdown" class="search-dropdown"></div>
+      </div>
+    </div>
+
+    <!-- Right: Theme & Actions -->
+    <div class="navbar-actions">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+        <svg id="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <svg id="sun-icon" style="display:none" viewBox="0 0 24 24" width="20" height="20" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+
+      <div class="profile-dropdown-container">
+        <div class="profile-trigger" id="profile-trigger">
+          <img src="https://i.pravatar.cc/150?img=68" class="user-avatar" alt="Avatar">
+        </div>
+        <div class="profile-menu" id="profile-menu">
+           <div class="dropdown-header">
+             <div class="dropdown-name">Alex Johnson</div>
+             <div class="dropdown-role">Customer Account</div>
+           </div>
+           <a class="dropdown-item" href="customer-dashboard.html">My Dashboard</a>
+           <a class="dropdown-item" href="index.html" style="color:#ef4444">Log Out</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="services-page-header">
+    <div class="container">
+      <h1>Our Services</h1>
+      <p class="subtitle">Explore professional services offered by verified skilled workers on SkillBridge. We bring the best expertise right to your doorstep.</p>
+    </div>
+  </section>
+
+  <main class="container">
+    
+    <!-- PLUMBING SECTION -->
+    <section class="service-section">
+      <div class="section-title-wrap">
+        <h2>Plumbing Services</h2>
+        <div class="scroll-hint">Swipe left/right →</div>
+      </div>
+      <div class="services-slider-container">
+        <div class="services-slider">
+          
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/pipeleakrepair.jpeg" alt="Pipe Leak Repair"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Pipe Leak Repair</h3>
+              <p class="detailed-desc">Rapid detection and fixing of water leaks in walls, ceilings, and under floors to prevent damage.</p>
+              <a href="listing.html?cat=Plumber" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/draincleaning.jpeg" alt="Drain Cleaning"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Drain Cleaning</h3>
+              <p class="detailed-desc">Professional clearing of clogged drains and sewer lines using advanced snaking technology.</p>
+              <a href="listing.html?cat=Plumber" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/bathroomafter.jpeg" alt="Bathroom Installation"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Bathroom Installation</h3>
+              <p class="detailed-desc">Complete installation of toilets, sinks, showers, and modern faucets with precision sealing.</p>
+              <a href="listing.html?cat=Plumber" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/waterheaterrepair.jpeg" alt="Water Heater Repair"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Water Heater Repair</h3>
+              <p class="detailed-desc">Expert maintenance and repair for gas and electric water heaters to ensure consistent flow.</p>
+              <a href="listing.html?cat=Plumber" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/pipereplacement.jpeg" alt="Pipe Replacement"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Pipe Replacement</h3>
+              <p class="detailed-desc">Full repiping services for old, rusted, or damaged plumbing systems throughout your property.</p>
+              <a href="listing.html?cat=Plumber" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ELECTRICAL SECTION -->
+    <section class="service-section">
+      <div class="section-title-wrap">
+        <h2>Electrical Services</h2>
+        <div class="scroll-hint">Swipe left/right →</div>
+      </div>
+      <div class="services-slider-container">
+        <div class="services-slider">
+          
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/wiring.jpeg" alt="Home Wiring"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Home Wiring</h3>
+              <p class="detailed-desc">Safe and efficient wiring for new constructions or old home renovations by certified pros.</p>
+              <a href="listing.html?cat=Electrician" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/lightafter.jpeg" alt="Lighting Installation"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Lighting Installation</h3>
+              <p class="detailed-desc">Decorative and functional lighting setups including chandeliers, recessed lights, and smart LEDs.</p>
+              <a href="listing.html?cat=Electrician" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/electrician.jpeg" alt="Electrical Panel Upgrade"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Electrical Panel Upgrade</h3>
+              <p class="detailed-desc">Upgrading older panels to support modern heavy appliances and prevent circuit overloads.</p>
+              <a href="listing.html?cat=Electrician" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/socketswitchrepair.jpeg" alt="Socket & Switch Repair"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Socket & Switch Repair</h3>
+              <p class="detailed-desc">Quick fixes for sparky outlets, non-functional switches, and hazardous electrical points.</p>
+              <a href="listing.html?cat=Electrician" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/generatorinstallation.jpeg" alt="Generator Installation"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Generator Installation</h3>
+              <p class="detailed-desc">Backup power solutions including generator setups and transfer switch installations.</p>
+              <a href="listing.html?cat=Electrician" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- MECHANIC SECTION -->
+    <section class="service-section">
+      <div class="section-title-wrap">
+        <h2>Mechanic Services</h2>
+        <div class="scroll-hint">Swipe left/right →</div>
+      </div>
+      <div class="services-slider-container">
+        <div class="services-slider">
+          
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/carenginediagnostics.jpeg" alt="Engine Diagnostics"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Engine Diagnostics</h3>
+              <p class="detailed-desc">Advanced computer-aided diagnostics to find and fix complex engine performance issues.</p>
+              <a href="listing.html?cat=Mechanic" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/oilchange.jpeg" alt="Oil Change"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Oil Change</h3>
+              <p class="detailed-desc">Premium oil and filter changes to keep your engine running smoothly and extend its lifespan.</p>
+              <a href="listing.html?cat=Mechanic" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/brakerepair.jpeg" alt="Brake Repair"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Brake Repair</h3>
+              <p class="detailed-desc">Full brake system checkups, pad replacements, and rotor resurfacing for your safety.</p>
+              <a href="listing.html?cat=Mechanic" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/batteryreplacement.jpeg" alt="Battery Replacement"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Battery Replacement</h3>
+              <p class="detailed-desc">Mobile battery testing and replacement services for all car makes and models.</p>
+              <a href="listing.html?cat=Mechanic" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/caracrepair.jpeg" alt="Car AC Repair"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Car AC Repair</h3>
+              <p class="detailed-desc">AC recharging, leak fixing, and compressor repairs to keep you cool on the road.</p>
+              <a href="listing.html?cat=Mechanic" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+
+
+        </div>
+      </div>
+    </section>
+
+    <!-- CARPENTRY SECTION -->
+    <section class="service-section">
+      <div class="section-title-wrap">
+        <h2>Carpentry Services</h2>
+        <div class="scroll-hint">Swipe left/right →</div>
+      </div>
+      <div class="services-slider-container">
+        <div class="services-slider">
+          
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/furniturerepair.jpeg" alt="Furniture Repair"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Furniture Repair</h3>
+              <p class="detailed-desc">Restoring broken chairs, tables, and sofas to their original strength and beauty.</p>
+              <a href="listing.html?cat=Carpenter" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/cabinetinstallation.jpeg" alt="Cabinet Installation"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Cabinet Installation</h3>
+              <p class="detailed-desc">Precise fitting and installation of kitchen and bathroom cabinets for a seamless look.</p>
+              <a href="listing.html?cat=Carpenter" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/doorinstallation.jpeg" alt="Door Installation"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Door Installation</h3>
+              <p class="detailed-desc">Hanging, aligning, and securing all types of interior and exterior doors with hardware.</p>
+              <a href="listing.html?cat=Carpenter" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/customshelves.jpeg" alt="Custom Shelves"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Custom Shelves</h3>
+              <p class="detailed-desc">Designing and building bespoke shelving solutions for libraries, pantries, and living rooms.</p>
+              <a href="listing.html?cat=Carpenter" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+          <article class="service-detailed-card">
+            <div class="detailed-img-wrap"><img src="../static/images/woodenflooring.jpeg" alt="Wooden Flooring"></div>
+            <div class="detailed-body">
+              <h3 class="detailed-title">Wooden Flooring</h3>
+              <p class="detailed-desc">Expert laying of hardwood, laminate, or vinyl plank flooring with professional finish.</p>
+              <a href="listing.html?cat=Carpenter" class="view-pro-btn">View Workers</a>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- connect session.js for updating the UI based on user signed in -->
+  <script src="../static/js/session.js"></script>
+  
+  <script src="../static/js/data.js"></script>
+  <script src="../static/js/dashboard.js"></script>
+  <script src="../static/js/footer.js"></script>
+  <script src="../static/js/search.js"></script>
+
+</body>
+
+</html>

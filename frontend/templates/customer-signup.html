@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SkillBridge — Customer Signup</title>
+  <link rel="stylesheet" href="../static/css/style.css">
+  <link rel="stylesheet" href="../static/css/auth.css">
+  <script src="../static/js/theme.js"></script>
+</head>
+<body style="background-color: var(--bg); color: var(--text);">
+  <!-- Floating Theme Toggle -->
+  <div style="position: fixed; top: 24px; right: 24px; z-index: 1000;">
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+      <svg id="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+      <svg id="sun-icon" style="display:none" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Split Auth Layout -->
+  <main class="auth-split">
+    <!-- Left panel decorative image (Hidden on mobile) -->
+    <div class="auth-panel-img" aria-hidden="true">
+      <div class="animation-scene">
+        <div class="central-orb">SB</div>
+        <div class="tool-orbit">
+          <!-- Wrench (Mechanic) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+          </div>
+          <!-- Hammer (Carpenter) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 5 4 4"></path><path d="M7 21a5 5 0 0 1-5-5"></path><path d="M13 3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h9z"></path><path d="M17.7 7.7a2.5 2.5 0 1 1 3.5 3.5L18 14.5l-3.5-3.5 3.2-3.3z"></path><path d="m3 21 8-8"></path></svg>
+          </div>
+          <!-- Droplet (Plumber) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path></svg>
+          </div>
+          <!-- Zap (Electrician) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </div>
+          <!-- Settings (General) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </div>
+          <!-- Truck (Transportation/Mechanic) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+          </div>
+          <!-- Clipboard (Service) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+          </div>
+          <!-- User Check (Verified Workers) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel login form -->
+    <div class="auth-panel-form">
+      <div class="auth-card" style="max-width:480px">
+        <!-- Back Link -->
+        <a href="role-selection.html" style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:600;margin-bottom:24px;font-size:14px">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Back to Roles
+        </a>
+
+        <h1 style="margin:0 0 8px;font-size:32px;letter-spacing:-0.5px">Create an Account</h1>
+        <p class="muted" style="margin-bottom:24px;font-size:15px">Sign up to start hiring professional skill workers.</p>
+
+        <form id="customer-signup-form">
+          <!-- Full Name -->
+       
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="input-group">
+                  <label class="input-label" for="first-name">First Name</label>
+                  <div class="input-wrapper">
+                      <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      <input class="modern-input" id="first-name" type="text" placeholder="John" required>
+                  </div>
+              </div>
+              <div class="input-group">
+                  <label class="input-label" for="last-name">Last Name</label>
+                  <div class="input-wrapper">
+                      <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      <input class="modern-input" id="last-name" type="text" placeholder="Doe" required>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Email -->
+          <div class="input-group">
+            <label class="input-label" for="email">Email Address</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              <input class="modern-input" id="email" type="email" placeholder="john@example.com" required>
+            </div>
+          </div>
+
+          <!-- Phone Number -->
+          <div class="input-group">
+            <label class="input-label" for="phone">Phone Number</label>
+            <div style="display:flex;gap:12px">
+              <div class="input-wrapper" style="flex:1">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                <input class="modern-input" id="phone" type="tel" placeholder="0300 1234567" required>
+              </div>
+              <button type="button" class="btn outline" style="width:auto;padding:0 20px" onclick="alert('OTP sent via SMS')">Verify</button>
+            </div>
+          </div>
+
+          <!-- OTP Input (Mocked Hidden Initially) -->
+          <div class="input-group" id="otp-group" style="display:none">
+            <label class="input-label" for="otp">Enter OTP</label>
+            <div class="input-wrapper">
+              <input class="modern-input no-icon" id="otp" type="text" placeholder="6-digit code">
+            </div>
+            <p style="font-size:12px;color:var(--success);margin-top:4px">Verified</p>
+          </div>
+
+          <!-- Password Grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="input-group">
+              <label class="input-label" for="password">Password</label>
+              <div class="input-wrapper">
+                <input class="modern-input no-icon" id="password" type="password" placeholder="Create password" required minlength="6">
+              </div>
+            </div>
+            <div class="input-group">
+              <label class="input-label" for="confirm-password">Confirm</label>
+              <div class="input-wrapper">
+                <input class="modern-input no-icon" id="confirm-password" type="password" placeholder="Repeat password" required>
+              </div>
+            </div>
+          </div>
+          <div class="error" id="signup-error" style="margin-top:-10px;margin-bottom:10px"></div>
+
+          <!-- Submit -->
+          <button id="submit-signup" type="submit" class="btn gradient" style="padding:14px;font-size:16px">Create Account</button>
+        </form>
+
+        <p style="text-align:center;margin-top:24px;color:var(--muted);font-size:15px">
+          Already have an account? 
+          <a href="index.html" style="color:var(--primary);font-weight:600;text-decoration:none">Log In</a>
+        </p>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Auth JS Logic -->
+  <script src="../static/js/auth.js"></script>
+  <script src="../static/js/footer.js"></script>
+</body>
+</html>
+

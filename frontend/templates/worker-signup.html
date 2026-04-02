@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SkillBridge — Worker Signup</title>
+  <link rel="stylesheet" href="../static/css/style.css">
+  <link rel="stylesheet" href="../static/css/auth.css">
+  <script src="../static/js/theme.js"></script>
+</head>
+<body style="background-color: var(--bg); color: var(--text);">
+  <!-- Floating Theme Toggle -->
+  <div style="position: fixed; top: 24px; right: 24px; z-index: 1000;">
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+      <svg id="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+      <svg id="sun-icon" style="display:none" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Split Auth Layout -->
+  <main class="auth-split">
+    <!-- Left panel decorative image (Hidden on mobile) -->
+    <div class="auth-panel-img" aria-hidden="true">
+      <div class="animation-scene">
+        <div class="central-orb">SB</div>
+        <div class="tool-orbit">
+          <!-- Wrench (Mechanic) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+          </div>
+          <!-- Hammer (Carpenter) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 5 4 4"></path><path d="M7 21a5 5 0 0 1-5-5"></path><path d="M13 3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h9z"></path><path d="M17.7 7.7a2.5 2.5 0 1 1 3.5 3.5L18 14.5l-3.5-3.5 3.2-3.3z"></path><path d="m3 21 8-8"></path></svg>
+          </div>
+          <!-- Droplet (Plumber) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path></svg>
+          </div>
+          <!-- Zap (Electrician) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </div>
+          <!-- Settings (General) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </div>
+          <!-- Truck (Transportation/Mechanic) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+          </div>
+          <!-- Clipboard (Service) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+          </div>
+          <!-- User Check (Verified Workers) -->
+          <div class="tool-item">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel login form -->
+    <div class="auth-panel-form">
+      <div class="auth-card" style="max-width:520px">
+        <!-- Back Link -->
+        <a href="role-selection.html" style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:600;margin-bottom:24px;font-size:14px">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Back to Roles
+        </a>
+
+        <h1 style="margin:0 0 8px;font-size:32px;letter-spacing:-0.5px">Join as a Professional</h1>
+        <p class="muted" style="margin-bottom:32px;font-size:15px">Complete the registration to start finding jobs.</p>
+
+        <!-- Progress Indicator -->
+        <div class="wizard-steps">
+          <div class="step-indicator active" id="step1-ind">
+            <div class="step-circle">1</div>
+            <div class="step-label">Basic Info</div>
+          </div>
+          <div class="step-indicator" id="step2-ind">
+            <div class="step-circle">2</div>
+            <div class="step-label">Professional</div>
+          </div>
+          <div class="step-indicator" id="step3-ind">
+            <div class="step-circle">3</div>
+            <div class="step-label">Documents</div>
+          </div>
+        </div>
+
+        <form id="worker-signup-form">
+          <!-- STEP 1: Basic Information -->
+          <div id="step1">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="input-group">
+                <label class="input-label" for="w-fname">First Name</label>
+                <div class="input-wrapper"><input class="modern-input no-icon" id="w-fname" type="text" required></div>
+              </div>
+              <div class="input-group">
+                <label class="input-label" for="w-lname">Last Name</label>
+                <div class="input-wrapper"><input class="modern-input no-icon" id="w-lname" type="text" required></div>
+              </div>
+            </div>
+            
+            <div class="input-group">
+              <label class="input-label" for="w-email">Email Address</label>
+              <div class="input-wrapper"><input class="modern-input no-icon" id="w-email" type="email" required></div>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label" for="w-phone">Phone Number</label>
+              <div class="input-wrapper"><input class="modern-input no-icon" id="w-phone" type="tel" required></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="input-group">
+                <label class="input-label" for="w-password">Password</label>
+                <div class="input-wrapper"><input class="modern-input no-icon" id="w-password" type="password" required minlength="6"></div>
+              </div>
+              <div class="input-group">
+                <label class="input-label" for="w-confirm">Confirm</label>
+                <div class="input-wrapper"><input class="modern-input no-icon" id="w-confirm" type="password" required></div>
+              </div>
+            </div>
+            <div class="error" id="w-error"></div>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:16px">
+              <button type="button" class="btn gradient" style="width:140px" onclick="nextStep(1)">Next &rarr;</button>
+            </div>
+          </div>
+
+          <!-- STEP 2: Professional Information -->
+          <div id="step2" style="display:none">
+            
+            <div class="input-group">
+              <label class="input-label" for="w-category">Service Category</label>
+              <div class="input-wrapper">
+                <select class="modern-input no-icon" id="w-category" style="appearance:none" required>
+                  <option value="">Select your profession</option>
+                  <option value="plumber">Plumber</option>
+                  <option value="electrician">Electrician</option>
+                  <option value="carpenter">Carpenter</option>
+                  <option value="mechanic">Mechanic</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label" for="w-experience">Years of Experience</label>
+              <div class="input-wrapper"><input class="modern-input no-icon" id="w-experience" type="number" min="0" required></div>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label" for="w-location">Service Area / City</label>
+              <div class="input-wrapper"><input class="modern-input no-icon" id="w-location" type="text" required></div>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label" for="w-desc">Short Professional Summary</label>
+              <div class="input-wrapper"><textarea class="modern-input no-icon" id="w-desc" rows="3" style="border-radius:12px;padding:12px;resize:vertical" required></textarea></div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;margin-top:16px">
+              <button type="button" class="btn outline" style="width:100px" onclick="prevStep(2)">&larr; Back</button>
+              <button type="button" class="btn gradient" style="width:140px" onclick="nextStep(2)">Next &rarr;</button>
+            </div>
+          </div>
+
+          <!-- STEP 3: Verification Documents -->
+          <div id="step3" style="display:none">
+            
+            <div class="input-group">
+              <label class="input-label">National ID / CNIC (Front & Back)</label>
+              <div class="upload-box" onclick="document.getElementById('id-upload').click()">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <p style="margin:0;font-size:14px;color:var(--text)">Click to browse or drag and drop</p>
+                <p class="muted" style="margin:4px 0 0;font-size:12px">JPG, PNG or PDF (Max 5MB)</p>
+                <!-- TODO (Backend Integration): Re-add 'required' attribute here once custom JS file validation is implemented -->
+                <input type="file" id="id-upload" style="display:none" accept="image/*,.pdf">
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label">Profile Photo (Professional)</label>
+              <div class="upload-box" onclick="document.getElementById('photo-upload').click()" style="padding:16px">
+                <p style="margin:0;font-size:14px">Upload Profile Photo</p>
+                <!-- TODO (Backend Integration): Re-add 'required' attribute here once custom JS file validation is implemented -->
+                <input type="file" id="photo-upload" style="display:none" accept="image/*">
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label">Sample Work Photos (Optional)</label>
+              <div class="upload-box" onclick="document.getElementById('work-upload').click()" style="padding:16px">
+                <p style="margin:0;font-size:14px">Upload Portfolio Images</p>
+                <input type="file" id="work-upload" style="display:none" accept="image/*" multiple>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;margin-top:24px">
+              <button type="button" class="btn outline" style="width:100px" onclick="prevStep(3)">&larr; Back</button>
+              <button type="submit" class="btn gradient" style="width:auto;flex:1;margin-left:16px">Submit Application</button>
+            </div>
+          </div>
+
+        </form>
+
+        <p style="text-align:center;margin-top:32px;color:var(--muted);font-size:14px">
+          Already have an account? <a href="index.html" style="color:var(--primary);font-weight:600;text-decoration:none">Log In</a>
+        </p>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="../static/js/auth.js"></script>
+  <script src="../static/js/footer.js"></script>
+</body>
+</html>
+

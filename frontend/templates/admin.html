@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SkillBridge — Admin</title>
+  <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+  <header class="site-nav">
+    <div class="brand"><a href="home.html" style="text-decoration:none;color:inherit;">Admin — SkillBridge</a></div>
+    <div class="links"><a href="index.html">Logout</a></div>
+  </header>
+
+  <main class="wrap">
+    <section class="card" style="max-width:1100px">
+      <h1 class="title">Admin Dashboard</h1>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px">
+        <div class="card" style="padding:12px;min-width:180px">Total users<br><strong id="total-users-val">123</strong></div>
+        <div class="card" style="padding:12px;min-width:180px">Total workers<br><strong id="total-workers-val">42</strong></div>
+        <div class="card" style="padding:12px;min-width:180px">Pending approvals<br><strong id="pending-approvals-val">3</strong></div>
+
+      </div>
+
+      <h2 style="margin-top:24px">All Registered Workers</h2>
+      <div id="all-workers-list"></div>
+    </section>
+  </main>
+  <script src="../static/js/data.js"></script>
+  <script src="../static/js/admin.js"></script>
+  <script src="../static/js/footer.js"></script>
+</body>
+</html>
