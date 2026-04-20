@@ -33,6 +33,7 @@ if (loginForm) {
             localStorage.setItem('user_role',     data.user.role);
             localStorage.setItem('first_name',    data.user.first_name);
             localStorage.setItem('last_name',     data.user.last_name);
+            localStorage.setItem('profile_photo_url', data.user.profile_photo_url);
 
             // Redirect based on role
             if (data.user.role === 'worker') {
@@ -281,6 +282,7 @@ if (customerForm) {
             localStorage.setItem('user_role',     data.user.role);
             localStorage.setItem('first_name',    data.user.first_name);
             localStorage.setItem('last_name',     data.user.last_name);
+            
 
             // ── Redirect to customer dashboard on success ──
             location.href = 'customer-dashboard.html';

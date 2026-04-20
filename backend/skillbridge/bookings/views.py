@@ -59,6 +59,7 @@ class BookingCreateView(generics.CreateAPIView):
     Customer submits a new booking request.
 
     Body: {
+        id:id
         worker_profile: uuid,
         service_category: "plumber",
         scheduled_at: "2026-03-25T14:00:00Z",

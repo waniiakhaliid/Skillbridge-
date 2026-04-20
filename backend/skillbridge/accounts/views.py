@@ -26,10 +26,78 @@ from .serializers import (
     WorkerProfileSerializer,
     CustomerProfileSerializer,
     UserSerializer,
+    WorkerCardSerializer,
 )
 
 User = get_user_model()
 
+
+
+# -------------------------------------------------------
+# WORKER LISTING VIEWS (used by frontend data.js)
+# -------------------------------------------------------
+
+class WorkerListView(generics.ListAPIView):
+    """
+    GET /api/accounts/workers/
+    GET /api/accounts/workers/?category=plumber
+
+    Returns all approved, active workers formatted for
+    the frontend listing/home page cards.
+
+    Uses WorkerCardSerializer which flattens the data into
+    the same shape as the old hardcoded SKILLBRIDGE_DATA.workers.
+
+    Public endpoint — no login required.
+    """
+    serializer_class   = WorkerCardSerializer   # ← CHANGED from WorkerProfileSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        queryset = WorkerProfile.objects.filter(
+            verification_status='approved',
+            user__account_status='active'
+        ).select_related(
+            'user'          # JOIN User table — needed for name, photo
+        ).prefetch_related(
+            'services'      # JOIN WorkerService — needed for category
+        )
+
+        # Optional filter by category: ?category=plumber
+        category = self.request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(services__category=category.lower())
+
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        """
+        Override list() to wrap response in { workers: [...] }
+        so frontend can do: data.workers.forEach(...)
+        """
+        queryset    = self.get_queryset()
+        serializer  = self.get_serializer(queryset, many=True)
+        return Response({'workers': serializer.data})
+
+
+class WorkerDetailView(generics.RetrieveAPIView):
+    """
+    GET /api/accounts/workers/<uuid:pk>/
+
+    Returns a single worker's card data by their WorkerProfile UUID.
+    Used by profile.html?worker=<id>
+
+    Public endpoint — no login required.
+    """
+    serializer_class   = WorkerCardSerializer   # ← CHANGED from WorkerProfileSerializer
+    permission_classes = [permissions.AllowAny]
+    queryset           = WorkerProfile.objects.filter(
+        verification_status='approved'
+    ).select_related(
+        'user'
+    ).prefetch_related(
+        'services'
+    )
 
 # -------------------------------------------------------
 # REGISTRATION VIEWS

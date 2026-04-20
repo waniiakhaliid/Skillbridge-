@@ -16,6 +16,8 @@ from rest_framework_simplejwt.views import (
 
 from accounts.tokens import SkillBridgeTokenView  # POST /api/auth/login/  → returns access + refresh token
 from accounts.views import LogoutView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     # Django's built-in admin panel at /admin/
@@ -39,3 +41,5 @@ urlpatterns = [
     path('api/accounts/', include('accounts.urls')),
     path('api/bookings/', include('bookings.urls')),
 ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

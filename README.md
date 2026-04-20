@@ -109,6 +109,17 @@ Frontend will be running at `http://localhost:3000`
 | GET | `/api/accounts/workers/?category=plumber` | Filter workers by category | Public |
 | GET | `/api/accounts/workers/<uuid>/` | Get single worker profile | Public |
 
+### Bookings
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| POST | `/api/bookings/` | Create new booking | Customer |
+| GET | `/api/bookings/my/` | Get customer's bookings | Customer |
+| GET | `/api/bookings/worker/` | Get worker's bookings | Worker |
+| GET | `/api/bookings/<uuid>/` | Get booking details | Participant |
+| PATCH | `/api/bookings/<uuid>/status/` | Update booking status | Worker |
+| POST | `/api/bookings/<uuid>/cancel/` | Cancel a booking | Customer |
+| POST | `/api/bookings/<uuid>/review/` | Submit a review | Customer |
+
 ---
 
 ## 📂 Frontend Pages
@@ -167,6 +178,43 @@ JWT tokens are stored in `localStorage` and sent in the `Authorization: Bearer <
 - `WorkerProfile` — professional details, verification status, ratings
 - `WorkerService` — categories a worker offers (plumber, electrician etc.)
 - `CustomerProfile` — customer details and booking history
+- `Booking` — booking request with pricing and status tracking
+- `Review` — customer reviews on completed bookings
+
+---
+
+## 🌱 Seeding the Database
+
+The database comes pre-populated with sample workers and test data to enable frontend development without manual user creation.
+
+### Run the Seed Command
+
+```bash
+cd backend/skillbridge
+
+# Load sample workers into the database
+python manage.py seed_workers
+
+# This creates:
+# - 25+ verified workers across 4 categories (Plumber, Electrician, Carpenter, Mechanic)
+# - Test customer and worker accounts for manual testing
+# - Sample profile photos and service categories
+```
+
+### Sample Login Credentials
+
+After seeding, use these accounts to test:
+
+**Customer Account:**
+- Email: `customer@skillbridge.com`
+- Password: `test123!@#`
+
+**Worker Account:**
+- Email: `worker@skillbridge.com`
+- Password: `test123!@#`
+
+**Admin Account:** (create via `python manage.py createsuperuser`)
+- Access at: `http://127.0.0.1:8000/admin/`
 
 ---
 
@@ -178,10 +226,149 @@ JWT tokens are stored in `localStorage` and sent in the `Authorization: Bearer <
 
 ---
 
+## 📚 Frontend Architecture
+
+### Key JavaScript Files
+
+| File | Purpose |
+|---|---|
+| `config.js` | API base URL and default settings |
+| `api.js` | Generic HTTP client with JWT auth |
+| `data.js` | Loads workers from backend `/api/accounts/workers/` |
+| `session.js` | User authentication state management |
+| `booking-history.js` | **NEW** — Booking API functions and shared utilities |
+| `customer-dashboard.js` | Customer booking management and history |
+| `worker-dashboard.js` | Worker job requests and status updates |
+| `booking.js` | Booking form flow (date, time, details, confirmation) |
+| `profile.js` | Worker profile page and booking modal |
+
+### Booking System Architecture
+
+```
+User Books Worker
+    ↓
+booking.js renders 3-slide form:
+  1. Date, Time, Duration
+  2. Address, Description, Payment Method
+  3. Review & Confirm
+    ↓
+createBooking() called → POST /api/bookings/
+    ↓
+Backend creates Booking object
+    ↓
+Success screen shown:
+  - "Find More Workers" button (redirect to listing.html)
+  - "Cancel Booking" button (10-min window)
+  - Live countdown timer
+```
+
+### Dashboard Data Flow
+
+**Customer Dashboard:**
+```
+Page loads
+  ↓
+customer-dashboard.js detects #customer-bookings-container
+  ↓
+getMyBookings() → GET /api/bookings/my/
+  ↓
+Renders booking cards using customerBookingCard()
+  ↓
+Actions: Cancel, Leave Review, View Details
+```
+
+**Worker Dashboard:**
+```
+Page loads
+  ↓
+worker-dashboard.js detects #worker-bookings-container
+  ↓
+getWorkerBookings() → GET /api/bookings/worker/
+  ↓
+Groups by status: Pending, Accepted, In Progress, Completed, Cancelled
+  ↓
+Renders cards using workerBookingCard()
+  ↓
+Actions: Accept/Decline, Start Job, Mark Complete
+```
+
+### booking-history.js Module
+
+Provides **centralized booking management** for both customer and worker dashboards:
+
+**API Functions:**
+- `getMyBookings()` — Fetch customer bookings
+- `getWorkerBookings()` — Fetch worker bookings  
+- `updateBookingStatus()` — Change booking status
+- `cancelBooking()` — Cancel a booking
+- `submitReview()` — Leave a customer review
+
+**Utility Functions:**
+- `authHeaders()` — Return JWT-authenticated headers
+- `statusBadge(status)` — Render status badges (HTML)
+- `formatDate(dateString)` — Human-readable date/time formatting
+- `customerBookingCard(b)` — Card template for customer view
+- `workerBookingCard(b, groupKey)` — Card template for worker view
+
+---
+
+
+
 ## 📋 Development Phases
 
 - **Phase 1** ✅ — Auth, user management, worker verification
-- **Phase 2** 🔜 — Bookings and payments
-- **Phase 3** 🔜 — Location services and GPS tracking
-- **Phase 4** 🔜 — Reviews, ratings, and commissions
-- **Phase 5** 🔜 — Notifications and chat
+- **Phase 2** In Progress  — Bookings management, customer & worker dashboards
+- **Phase 3** 🔜 — Booking detail page, cancellation with fees
+- **Phase 4** 🔜 — Location services and GPS tracking
+- **Phase 5** 🔜 — Notifications and real-time chat
+- **Phase 6** 🔜 — Ratings, earnings reports, payment processing
+
+---
+
+## 🐛 Troubleshooting
+
+### Issue: Dashboards show no bookings (dummy data visible)
+
+**Cause:** 
+- Backend not running
+- API endpoints not authenticated
+- No booking data in database
+
+**Solution:**
+```bash
+# 1. Start backend server
+cd backend/skillbridge
+python manage.py runserver
+
+# 2. Seed the database with sample workers
+python manage.py seed_workers
+
+# 3. Login to a customer/worker account
+# 4. Create test bookings via the booking form
+# 5. Check dashboards — they should now load real data via API
+```
+
+### Issue: API returns 401 Unauthorized
+
+**Cause:** JWT token missing or invalid
+
+**Solution:**
+- Login to generate tokens in localStorage
+- Check browser DevTools → Application → LocalStorage → `access_token`
+- If missing, login again
+- If expired, use refresh token endpoint to get new one
+
+### Issue: CORS errors when fetching from frontend
+
+**Solution:** Start frontend via HTTP server, not file:// protocol:
+```bash
+cd frontend
+python -m http.server 3000
+# Then access: http://localhost:3000
+```
+
+---
+
+## 📞 Support
+
+For issues or feature requests, refer to the project documentation or contact the development team.

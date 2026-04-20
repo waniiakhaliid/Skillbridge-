@@ -1,29 +1,352 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Skill Bridge — Booking</title>
+  <title>Skill Bridge — Book Service</title>
+
   <link rel="stylesheet" href="../static/css/style.css">
+  <link rel="stylesheet" href="../static/css/home.css">
+  <link rel="stylesheet" href="../static/css/dashboard.css">
+  <script src="../static/js/theme.js"></script>
+
+  <style>
+    /* ========================================
+       BOOKING-SPECIFIC STYLES
+    ======================================== */
+    input[type="date"]:focus, 
+    input[type="time"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(90,140,43,0.2);
+    }
+    
+    input[type="date"], 
+    input[type="time"] {
+      accent-color: var(--primary);
+    }
+
+    .slide-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .slide-dot.active {
+      width: 20px;
+      background: var(--primary);
+      border-radius: 4px;
+    }
+
+    .booking-slide {
+      width: 33.333%;
+      padding: 24px;
+      flex-shrink: 0;
+    }
+
+    #booking-slider {
+      display: flex;
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      width: 300%;
+    }
+  </style>
 </head>
+
 <body>
-  <header class="site-nav">
-    <div class="brand"><a href="home.html">â† Home</a></div>
-    <div class="links"><a href="index.html">Sign In</a></div>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div class="mobile-overlay" id="mobile-overlay"></div>
+
+  <header class="top-navbar">
+    <!-- Left: Brand & Main Links -->
+    <div style="display: flex; align-items: center; gap: 24px;">
+      <a href="home.html" class="navbar-brand">
+        <div class="logo-mark">SB</div>
+        SkillBridge
+      </a>
+      <nav class="navbar-links">
+        <a class="nav-item" href="home.html">Home</a>
+        <a class="nav-item" href="services.html">Services</a>
+        <a class="nav-item" href="listing.html">Workers</a>
+        <a class="nav-item" href="contact.html">Contact</a>
+      </nav>
+    </div>
+
+    <!-- Center: Persistent Search Bar -->
+    <div class="navbar-search">
+      <div class="navbar-search-container">
+        <svg class="navbar-search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" placeholder="Search services (Mechanic, Plumber...)" id="nav-search-input">
+        <div id="nav-search-dropdown" class="search-dropdown"></div>
+      </div>
+    </div>
+
+    <!-- Right: Actions & Theme Toggle -->
+    <div class="navbar-actions">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+        <svg id="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <svg id="sun-icon" style="display:none" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+
+      <div class="profile-dropdown-container">
+        <div class="profile-trigger" id="profile-trigger">
+          <img src="https://i.pravatar.cc/150?img=68" class="user-avatar" alt="Avatar">
+        </div>
+      </div>
+    </div>
   </header>
 
-  <main class="wrap">
-    <section class="card" style="max-width:720px;width:100%">
-      <h1 class="title">Book Appointment</h1>
-      <div id="booking-area">
-        <!-- Filled by app.js -->
+  <!-- ========================================
+       MAIN CONTENT AREA
+  ======================================== -->
+  <main style="max-width:1200px; width:100%; margin:24px auto 64px auto; padding:0 4%; min-height:100vh;">
+    <div id="booking-container" style="width:100%;">
+      <div style="padding:40px; text-align:center; color:var(--muted);">
+        Loading booking form...
       </div>
-    </section>
+    </div>
   </main>
 
+
+  <!-- ========================================
+       HTML TEMPLATES (Hidden)
+  ======================================== -->
+  
+  <!-- Template: Booking Form -->
+  <template id="booking-form-template">
+    <div style="max-width:600px;margin:0 auto;">
+      <h1 style="text-align:center;margin-bottom:32px;color:var(--text);font-size:28px;">
+        Book <span data-worker="name"></span>
+      </h1>
+      <p style="text-align:center;margin-bottom:40px;color:var(--muted);font-size:16px;">
+        <span data-worker="service"></span> Professional • ⭐ <span data-worker="rating"></span> 
+        (<span data-worker="experience"></span> yrs experience)
+      </p>
+
+      <div class="card" style="border:1px solid var(--border);padding:0;position:relative;overflow:hidden;">
+        
+        <!-- Slider Navigation Dots -->
+        <div style="display:flex;justify-content:center;gap:8px;padding:16px 0 0 0;">
+          <span class="slide-dot active" data-slide="0"></span>
+          <span class="slide-dot" data-slide="1"></span>
+          <span class="slide-dot" data-slide="2"></span>
+        </div>
+
+        <!-- Slider Wrapper -->
+        <div style="overflow:hidden;width:100%;">
+          <div id="booking-slider">
+
+            <!-- SLIDE 1: Date & Time -->
+            <div class="booking-slide">
+              <h3 style="margin:0 0 4px;font-size:20px;color:var(--text);">Book this Professional</h3>
+              <p style="margin:0 0 20px;font-size:13px;color:var(--muted);">Step 1 of 3 — Pick a date & time</p>
+
+              <!-- Hourly Rate -->
+              <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface);padding:14px 16px;border-radius:10px;margin-bottom:20px;border:1px solid var(--border);">
+                <span style="font-size:14px;font-weight:600;color:var(--muted);">Hourly Rate</span>
+                <span style="font-size:24px;font-weight:800;color:var(--text);">
+                  Rs<span data-worker="price"></span>
+                  <span style="font-size:13px;font-weight:400;color:var(--muted);">/hr</span>
+                </span>
+              </div>
+
+              <!-- Date and Time Inputs -->
+              <div style="margin-bottom:24px;">
+                <label style="font-weight:600;font-size:14px;display:block;margin-bottom:10px;color:var(--text);">
+                  Select Date & Time
+                </label>
+                <input type="date" id="bk-exact-date" data-field="date"
+                  style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;margin-bottom:10px;">
+                <input type="time" id="bk-exact-time" data-field="time"
+                  style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;">
+              </div>
+
+              <!-- Duration -->
+              <div style="margin-bottom:24px;">
+                <label style="font-weight:600;font-size:14px;display:block;margin-bottom:10px;color:var(--text);">
+                  Estimated Duration
+                </label>
+                <select id="bk-duration" data-field="duration"
+                  style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;">
+                  <option value="1">1 hour</option>
+                  <option value="2" selected>2 hours</option>
+                  <option value="3">3 hours</option>
+                  <option value="4">4 hours</option>
+                  <option value="6">6 hours (Half Day)</option>
+                  <option value="8">8 hours (Full Day)</option>
+                </select>
+              </div>
+
+              <!-- Buttons -->
+              <div style="display:flex;gap:10px;margin-bottom:10px;">
+                <button id="book-now-btn" class="btn outline" style="flex:1;padding:12px;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;">
+                  Book Now
+                </button>
+              </div>
+              <button data-action="next" class="btn" style="width:100%;padding:14px;border-radius:10px;font-weight:600;font-size:15px;background:var(--primary);color:white;border:none;cursor:pointer;">
+                Next → Address & Details
+              </button>
+            </div>
+
+            <!-- SLIDE 2: Address & Description -->
+            <div class="booking-slide">
+              <h3 style="margin:0 0 4px;font-size:20px;color:var(--text);">Almost There</h3>
+              <p style="margin:0 0 20px;font-size:13px;color:var(--muted);">Step 2 of 3 — Where & what's the problem?</p>
+
+              <!-- Service Address -->
+              <div style="margin-bottom:18px;">
+                <label style="font-weight:600;font-size:14px;display:block;margin-bottom:8px;color:var(--text);">
+                  📍 Service Address <span style="color:#ef4444;">*</span>
+                </label>
+                <textarea id="bk-address" data-field="address"
+                  placeholder="e.g. House 12, Street 4, F-7/2, Islamabad"
+                  style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;resize:none;height:90px;box-sizing:border-box;"></textarea>
+              </div>
+
+              <!-- Problem Description -->
+              <div style="margin-bottom:18px;">
+                <label style="font-weight:600;font-size:14px;display:block;margin-bottom:8px;color:var(--text);">
+                  🔧 Problem Description
+                </label>
+                <textarea id="bk-description" data-field="description"
+                  placeholder="Describe the issue briefly e.g. Kitchen sink is leaking badly..."
+                  style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;resize:none;height:90px;box-sizing:border-box;"></textarea>
+              </div>
+
+              <!-- Payment Method -->
+              <div style="margin-bottom:24px;">
+                <label style="font-weight:600;font-size:14px;display:block;margin-bottom:8px;color:var(--text);">
+                  💳 Payment Method
+                </label>
+                <select id="bk-payment" data-field="paymentMethod"
+                  style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;">
+                  <option value="cash">💵 Cash on Delivery</option>
+                  <option value="jazzcash">📱 JazzCash</option>
+                  <option value="easypaisa">📱 EasyPaisa</option>
+                  <option value="card">💳 Credit/Debit Card</option>
+                </select>
+              </div>
+
+              <!-- Nav Buttons -->
+              <div style="display:flex;gap:10px;">
+                <button data-action="back" class="btn outline" style="flex:1;padding:14px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;">
+                  ← Back
+                </button>
+                <button data-action="next" class="btn" style="flex:1;padding:14px;border-radius:10px;font-weight:600;font-size:14px;background:var(--primary);color:white;border:none;cursor:pointer;">
+                  Review →
+                </button>
+              </div>
+            </div>
+
+            <!-- SLIDE 3: Review & Confirm -->
+            <div class="booking-slide">
+              <h3 style="margin:0 0 4px;font-size:20px;color:var(--text);">Confirm Booking</h3>
+              <p style="margin:0 0 20px;font-size:13px;color:var(--muted);">Step 3 of 3 — Review your booking</p>
+
+              <!-- Summary Card -->
+              <div id="booking-summary" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;font-size:14px;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+                  <img data-worker="photo" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">
+                  <div>
+                    <div style="font-weight:700;color:var(--text);" data-worker="name"></div>
+                    <div style="color:var(--muted);font-size:13px;">
+                      <span data-worker="service"></span> Professional
+                    </div>
+                  </div>
+                </div>
+                <div id="summary-rows"></div>
+              </div>
+
+              <!-- Guarantee -->
+              <div style="background:rgba(108,138,61,0.08);padding:14px;border-radius:10px;margin-bottom:20px;display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="flex-shrink:0;margin-top:2px;">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span style="font-size:13px;color:var(--text);font-weight:600;line-height:1.5;">
+                  SkillBridge Guarantee
+                  <br><span style="font-weight:400;color:var(--muted);">Your satisfaction is strictly protected. You won't be charged until the job is done.</span>
+                </span>
+              </div>
+
+              <!-- Find More Workers Button -->
+              <button id="find-more-workers" class="btn outline" style="width:100%;padding:12px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;margin-bottom:10px;">
+                Find More Workers
+              </button>
+
+              <!-- Confirm Button -->
+              <button id="confirm-booking-btn" class="btn" style="width:100%;padding:16px;border-radius:10px;font-weight:700;font-size:16px;background:#5A8C2B;color:white;border:none;box-shadow:0 8px 16px rgba(90,140,43,0.25);cursor:pointer;transition:all 0.2s;">
+                ✅ Confirm Request
+              </button>
+
+              <!-- Message -->
+              <div id="bk-msg" style="margin-top:14px;font-size:14px;text-align:center;font-weight:600;min-height:20px;"></div>
+
+              <!-- Back Button -->
+              <button data-action="back" style="width:100%;margin-top:10px;padding:10px;border-radius:10px;font-size:14px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;">
+                ← Edit Details
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Template: Success Screen -->
+  <template id="success-screen-template">
+    <div style="text-align:center;padding:40px 20px;">
+      <div style="font-size:48px;margin-bottom:20px;">🎉</div>
+      <h2 style="color:var(--text);margin-bottom:10px;">Booking Confirmed!</h2>
+      <p style="color:var(--muted);margin-bottom:30px;">Your booking has been successfully created.</p>
+      
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+        <div style="font-weight:600;color:var(--text);margin-bottom:10px;">Booking Details</div>
+        <div style="color:var(--muted);font-size:14px;">
+          <span data-success="workerName"></span> • <span data-success="datetime"></span>
+        </div>
+      </div>
+      
+      <button id="cancel-booking-btn" class="btn" style="width:100%;padding:14px;border-radius:10px;font-weight:600;font-size:15px;background:#ef4444;color:white;border:none;cursor:pointer;margin-bottom:10px;">
+        Cancel Booking (10:00)
+      </button>
+      
+      <button id="find-more-after-booking" class="btn outline" style="width:100%;padding:12px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;">
+        Find More Workers
+      </button>
+    </div>
+  </template>
+
+
+  <!-- ========================================
+       EXTERNAL SCRIPTS
+  ======================================== -->
+  <script src="../static/js/config.js"></script>
+  <script src="../static/js/api.js"></script>
   <script src="../static/js/data.js"></script>
-  <script src="../static/js/app.js"></script>
+  <script src="../static/js/booking.js"></script>
+  <script src="../static/js/dashboard.js"></script>
   <script src="../static/js/footer.js"></script>
+  <script src="../static/js/search.js"></script>
   <script src="../static/js/session.js"></script>
+
 </body>
 </html>

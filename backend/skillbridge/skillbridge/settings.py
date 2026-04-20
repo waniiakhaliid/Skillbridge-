@@ -168,3 +168,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Add these two lines — media folder will be created inside backend/skillbridge/
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# CORS settings to allow frontend JS to call our API
+CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:5500", "http://localhost:5500"]

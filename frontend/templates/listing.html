@@ -244,12 +244,19 @@
     </section>
   </main>
 
-  <script src="data.js?v=2"></script>
-  <script src="app_clean.js?v=2"></script>
-  <script src="dashboard.js?v=2"></script>
+  <!-- CORRECT — go up one level, then into static/js/ -->
+  <!-- load data from database -->
+  <script src="../static/js/config.js"></script>
+  <script src="../static/js/api.js"></script>
+  <script src="../static/js/data.js"></script>
+  
+  <script src="../static/js/listing.js"></script>
+  <script src="../static/js/dashboard.js"></script>
   <script src="../static/js/footer.js"></script>
   <script src="../static/js/search.js"></script>
   <script src="../static/js/session.js"></script>
+  
+  
 </body>
 
 </html>

@@ -238,4 +238,109 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = User
-        fields = ['id', 'first_name', 'last_name', 'email', 'phone', 'role', 'account_status']
+        fields = ['id', 'first_name', 'last_name', 'email', 'phone', 'role', 'account_status','profile_photo_url']
+
+
+# -------------------------------------------------------
+# WORKER CARD SERIALIZER
+# Used for the frontend listing/home page
+# Returns data in the exact shape that SKILLBRIDGE_DATA.workers expects
+# -------------------------------------------------------
+
+class WorkerCardSerializer(serializers.ModelSerializer):
+    """
+    Flattened worker serializer for frontend listing cards.
+    
+    Combines data from 3 tables:
+      - User          → name, photo
+      - WorkerProfile → experience, rating, bio, price, location, availability
+      - WorkerService → service category
+    
+    Output shape matches the old hardcoded data.js exactly so
+    all existing frontend JS works without changes.
+    """
+
+    # 'name' = first_name + last_name from User model
+    name = serializers.CharField(source='user.full_name', read_only=True)
+
+    # 'photo' = profile_photo_url from User model
+    # e.g. '/media/profile_photos/hasnain.jpeg'
+    photo = serializers.CharField(source='user.profile_photo_url', read_only=True)
+
+    # Rename 'years_experience' → 'experience' for frontend
+    experience = serializers.IntegerField(source='years_experience', read_only=True)
+
+    # Rename 'avg_rating' → 'rating' for frontend
+    rating = serializers.FloatField(source='avg_rating', read_only=True)
+
+    # Rename 'base_hourly_rate' → 'price' for frontend
+    price = serializers.DecimalField(
+        source='base_hourly_rate',
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+
+    # Rename 'city' → 'location' for frontend
+    location = serializers.CharField(source='city', read_only=True)
+
+    # 'verified' = True if verification_status is 'approved'
+    verified = serializers.SerializerMethodField()
+
+    # 'service' = first service category, capitalized
+    # e.g. 'plumber' → 'Plumber'
+    service = serializers.SerializerMethodField()
+
+    # 'availability' = list like ['Today', 'Tomorrow'] that frontend expects
+    # Our DB stores a simple boolean is_available
+    # We convert it to a list for frontend compatibility
+    availability = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WorkerProfile
+        fields = [
+            'id',           # WorkerProfile UUID
+            'name',         # from User
+            'service',      # from WorkerService (first one)
+            'experience',   # years_experience renamed
+            'rating',       # avg_rating renamed
+            'bio',          # from WorkerProfile
+            'availability', # converted from boolean → list
+            'photo',        # from User
+            'verified',     # converted from status string → boolean
+            'price',        # base_hourly_rate renamed
+            'location',     # city renamed
+        ]
+
+    def get_verified(self, obj):
+        """
+        Frontend expects a boolean.
+        Convert 'approved' status string → True, anything else → False
+        """
+        return obj.verification_status == 'approved'
+
+    def get_service(self, obj):
+        """
+        Frontend expects a capitalized string like 'Plumber'.
+        Get the first service from the worker's services list.
+        Uses prefetch_related so no extra DB query per worker.
+        """
+        # obj.services comes from prefetch_related('services') in the view
+        first_service = obj.services.first()
+        if first_service:
+            return first_service.category.capitalize()  # 'plumber' → 'Plumber'
+        return None
+
+    def get_availability(self, obj):
+        """
+        Frontend expects a list like ['Today', 'Tomorrow', 'Weekend'].
+        Our DB only stores a boolean is_available.
+        
+        For now: if available → return ['Today', 'Tomorrow']
+                 if not      → return ['Weekend']
+        
+        TODO: Replace with a proper availability schedule model later
+        """
+        if obj.is_available:
+            return ['Today', 'Tomorrow']
+        return ['Weekend']

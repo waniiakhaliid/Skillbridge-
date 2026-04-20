@@ -21,6 +21,7 @@ class SkillBridgeTokenSerializer(TokenObtainPairSerializer):
             'last_name':  self.user.last_name,
             'email':      self.user.email,
             'role':       self.user.role,
+            'profile_photo_url': self.user.profile_photo_url,
         }
 
         return data

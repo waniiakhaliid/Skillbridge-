@@ -168,22 +168,29 @@
   // -----------------------------------------------------------------------
   // PROFILE AVATAR
   // -----------------------------------------------------------------------
-  function updateProfileAvatar(role) {
+ function updateProfileAvatar(role) {
     const img = document.querySelector('.profile-trigger img');
     if (!img) return;
 
-    const firstName = localStorage.getItem('first_name');
-    const workerAvatar = firstName ? `../static/images/${firstName.toLowerCase()}.jpeg` : '../static/images/sohaib.jpeg';
+    // Build full URL by prepending the backend base URL
+    // localStorage stores '/media/profiles/photo.jpg'
+    // browser needs 'http://127.0.0.1:8000/media/profiles/photo.jpg'
+    const photoPath    = localStorage.getItem('profile_photo_url');
+    const workerAvatar = photoPath 
+        ? `http://127.0.0.1:8000${photoPath}`  // full URL for development
+        : '../static/images/default-avatar.png' // fallback if no photo uploaded
 
     const avatars = {
-      guest: 'https://i.pravatar.cc/150?img=68',
-      customer: '../static/images/customer.jpeg',
-      worker: workerAvatar
+        guest    : 'https://i.pravatar.cc/150?img=68',
+        customer : '../static/images/customer.jpeg',
+        worker   : workerAvatar
     };
 
     img.src = avatars[role] || avatars.guest;
-    img.alt = role === 'guest' ? 'Guest Avatar' : `${role.charAt(0).toUpperCase() + role.slice(1)} Avatar`;
-  }
+    img.alt = role === 'guest' 
+        ? 'Guest Avatar' 
+        : `${role.charAt(0).toUpperCase() + role.slice(1)} Avatar`;
+}
 
   // -----------------------------------------------------------------------
   // SPA NAV (dashboard pages only)
