@@ -40,6 +40,14 @@ urlpatterns = [
     # -------------------------------------------------------
     path('api/accounts/', include('accounts.urls')),
     path('api/bookings/', include('bookings.urls')),
+
+    # -------------------------------------------------------
+    # PHASE-2 APP ROUTES (appended — existing paths above untouched)
+    # -------------------------------------------------------
+    path('api/locations/',     include('locations.urls')),
+    path('api/payments/',      include('payments.urls')),
+    path('api/notifications/', include('notifications.urls')),
+    path('api/chatbot/',       include('chatbot.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

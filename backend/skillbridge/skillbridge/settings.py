@@ -36,6 +36,13 @@ INSTALLED_APPS = [
     # SkillBridge apps (Phase 1)
     'accounts',
     'bookings',
+
+    # Phase-2 additions — appended here, existing entries above untouched
+    'django_filters',   # enables ?category=plumber style query filters on list views
+    'locations',        # GPS tracking, customer address book, ETA snapshots
+    'payments',         # discount codes, instalments, payments, worker earnings
+    'notifications',    # in-app notification centre + push token storage
+    'chatbot',          # support chatbot sessions and messages
 ]
 
 MIDDLEWARE = [
@@ -109,7 +116,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-   
+    # Phase-2 additions — django-filters for ?field=value URL params on list views
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    # Global pagination — prevents unbounded list responses on all endpoints
+    'DEFAULT_PAGINATION_CLASS': None,
 }
 
 
@@ -123,6 +133,11 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),  # refresh token valid for 30 days
     'AUTH_HEADER_TYPES': ('Bearer',),              # Authorization: Bearer <token>
 }
+
+# Phase-2 — rotate refresh tokens so a stolen refresh token cannot be reused
+# after it has been exchanged for a new access+refresh pair
+SIMPLE_JWT['ROTATE_REFRESH_TOKENS']    = True
+SIMPLE_JWT['BLACKLIST_AFTER_ROTATION'] = True
 
 
 # -------------------------------------------------------

@@ -9,7 +9,7 @@ This is where admins approve workers, manage users etc.
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, WorkerProfile, WorkerService, CustomerProfile
+from .models import Favorite, User, WorkerProfile, WorkerService, CustomerProfile
 
 
 # -------------------------------------------------------
@@ -92,3 +92,26 @@ class CustomerProfileAdmin(admin.ModelAdmin):
     list_display  = ['user', 'total_bookings', 'is_repeat_customer', 'created_at']
     search_fields = ['user__email', 'user__first_name']
     readonly_fields = ['total_bookings', 'is_repeat_customer']
+
+
+
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ['id', 'customer_name', 'worker_name', 'created_at']
+    list_filter = ['created_at']
+    search_fields = [
+        'customer__user__full_name',
+        'worker_profile__user__full_name'
+    ]
+    ordering = ['-created_at']
+
+    def customer_name(self, obj):
+        return obj.customer.user.full_name
+
+    def worker_name(self, obj):
+        return obj.worker_profile.user.full_name
+
+    customer_name.short_description = 'Customer'
+    worker_name.short_description = 'Worker'

@@ -53,3 +53,53 @@
     // Setup home specific search
     setupSearch('home-search-input', 'search-dropdown');
 })();
+// ===== ADD THIS AT THE END OF session.js =====
+
+// Adjust navbar formatting based on role
+function adjustNavbarFormatting() {
+  const role = localStorage.getItem('user_role');
+  const navLinks = document.querySelector('.navbar-links');
+  
+  if (!navLinks) return;
+
+  // Add CSS to handle different content widths
+  const style = document.createElement('style');
+  
+  if (role === 'worker') {
+    // Worker has longer tab names
+    style.textContent = `
+      .navbar-links {
+        gap: 8px !important;
+        overflow-x: auto !important;
+        scrollbar-width: none;
+      }
+      .navbar-links::-webkit-scrollbar {
+        display: none;
+      }
+      .nav-item {
+        padding: 0 10px !important;
+        font-size: 13px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+      }
+    `;
+  } else {
+    // Guest/Customer - normal spacing
+    style.textContent = `
+      .navbar-links {
+        gap: 24px !important;
+      }
+      .nav-item {
+        padding: 0 16px !important;
+        font-size: 15px !important;
+      }
+    `;
+  }
+  
+  document.head.appendChild(style);
+}
+
+// Call this after navbar is built
+setTimeout(() => {
+  adjustNavbarFormatting();
+}, 100);

@@ -355,3 +355,188 @@ class CustomerProfile(models.Model):
 
     def __str__(self):
         return f'{self.user.full_name} — Customer Profile'
+
+
+# -------------------------------------------------------
+# AUDIT LOG (Phase 2 addition)
+# Append-only table that records every admin action.
+# Never update or delete audit records — they are evidence.
+# -------------------------------------------------------
+
+class AuditLog(models.Model):
+    """
+    Records every admin action: status changes, verification decisions.
+    Append-only — admin history must never be altered.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # Who performed the action — SET_NULL so logs survive admin account changes
+    admin = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='audit_actions'
+    )
+
+    # e.g. 'user_status_change', 'worker_verification_approved'
+    action_type = models.CharField(max_length=50)
+
+    # Who was affected — null if action is not user-specific
+    target_user = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='audit_targets'
+    )
+
+    # Stores before/after state so full history is reconstructible
+    details = models.JSONField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'audit_logs'
+
+    def __str__(self):
+        return f'AuditLog: {self.action_type} by {self.admin}'
+
+
+# -------------------------------------------------------
+# TOOL MODELS (Phase 2 additions)
+# -------------------------------------------------------
+
+class Tool(models.Model):
+    """A physical tool a worker might own (e.g. drill, wrench, multimeter)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    name = models.CharField(max_length=100)
+
+    # Which trade this tool belongs to — reuses the existing ServiceCategory choices
+    # so the filter UI can show relevant tools when browsing by category
+    category = models.CharField(
+        max_length=20,
+        choices=ServiceCategory.choices
+    )
+
+    class Meta:
+        db_table = 'tools'
+
+    def __str__(self):
+        return f'{self.name} ({self.category})'
+
+
+class WorkerTool(models.Model):
+    """Junction: which tools a worker owns, with optional price adjustment."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    worker_profile = models.ForeignKey(
+        WorkerProfile,
+        on_delete=models.CASCADE,
+        related_name='tools'
+    )
+
+    tool = models.ForeignKey(
+        Tool,
+        on_delete=models.CASCADE
+    )
+
+    # +15 means worker charges 15% more because they bring specialist tools
+    price_adjustment_pct = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0
+    )
+
+    class Meta:
+        db_table = 'worker_tools'
+        # A worker cannot list the same tool twice
+        unique_together = ('worker_profile', 'tool')
+
+    def __str__(self):
+        return f'{self.worker_profile.user.full_name} — {self.tool.name}'
+
+
+class WorkerPortfolioPhoto(models.Model):
+    """Portfolio photos a worker uploads to showcase past work."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    worker_profile = models.ForeignKey(
+        WorkerProfile,
+        on_delete=models.CASCADE,
+        related_name='portfolio_photos'
+    )
+
+    photo_url = models.TextField()
+
+    # Optional caption — worker describes what the photo shows
+    caption = models.TextField(blank=True, null=True)
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'worker_portfolio_photos'
+
+    def __str__(self):
+        return f'Portfolio photo for {self.worker_profile.user.full_name}'
+
+
+class Favorite(models.Model):
+    """A customer saving a worker to their favourites list."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    customer = models.ForeignKey(
+        CustomerProfile,
+        on_delete=models.CASCADE,
+        related_name='favorites'
+    )
+
+    worker_profile = models.ForeignKey(
+        WorkerProfile,
+        on_delete=models.CASCADE,
+        related_name='favorited_by'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'favorites'
+        # Prevents a customer from favouriting the same worker twice
+        unique_together = ('customer', 'worker_profile')
+
+    def __str__(self):
+        return f'{self.customer.user.full_name} → {self.worker_profile.user.full_name}'
+
+
+class WorkerAvailability(models.Model):
+    """Days and hours a worker is available each week."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    worker_profile = models.ForeignKey(
+        WorkerProfile,
+        on_delete=models.CASCADE,
+        related_name='availability'
+    )
+
+    # 0=Monday, 6=Sunday — matches Python's weekday() convention
+    day_of_week = models.IntegerField()
+
+    start_time = models.TimeField()
+    end_time   = models.TimeField()
+
+    class Meta:
+        db_table = 'worker_availability'
+        # One slot per day — worker sets Mon 9am-6pm, not multiple overlapping slots
+        unique_together = ('worker_profile', 'day_of_week')
+
+    def __str__(self):
+        return (
+            f'{self.worker_profile.user.full_name} — '
+            f'Day {self.day_of_week} {self.start_time}–{self.end_time}'
+        )
