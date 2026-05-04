@@ -13,7 +13,10 @@ and the outside world (your frontend or mobile app).
 
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import WorkerProfile, WorkerService, CustomerProfile
+from .models import (
+    WorkerProfile, WorkerService, CustomerProfile,
+    Tool, WorkerTool, WorkerPortfolioPhoto, Favorite, WorkerAvailability,
+)
 
 # get_user_model() returns our custom User model safely
 # Always use this instead of importing User directly
@@ -335,12 +338,273 @@ class WorkerCardSerializer(serializers.ModelSerializer):
         """
         Frontend expects a list like ['Today', 'Tomorrow', 'Weekend'].
         Our DB only stores a boolean is_available.
-        
+
         For now: if available → return ['Today', 'Tomorrow']
                  if not      → return ['Weekend']
-        
+
         TODO: Replace with a proper availability schedule model later
         """
         if obj.is_available:
             return ['Today', 'Tomorrow']
         return ['Weekend']
+
+
+# =======================================================================
+# PHASE-2 SERIALIZERS
+# Appended below — all existing serializers above are untouched.
+# =======================================================================
+
+
+# -------------------------------------------------------
+# USER REGISTRATION (unified single endpoint)
+# -------------------------------------------------------
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    """
+    Unified registration serializer for both roles via POST /api/accounts/register/.
+    Role must be 'customer' or 'worker' — 'admin' is rejected at the API boundary
+    so attackers cannot self-promote.
+    Workers additionally require base_hourly_rate and city.
+    """
+
+    password         = serializers.CharField(write_only=True, min_length=6)
+    # Worker-only fields — optional for customers, validated below
+    base_hourly_rate = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False
+    )
+    city             = serializers.CharField(required=False, allow_blank=True)
+    categories       = serializers.ListField(
+        child=serializers.ChoiceField(
+            choices=['plumber', 'electrician', 'carpenter', 'mechanic']
+        ),
+        write_only=True,
+        required=False
+    )
+
+    class Meta:
+        model  = User
+        fields = [
+            'first_name', 'last_name', 'email', 'phone',
+            'password', 'role',
+            'base_hourly_rate', 'city', 'categories',
+        ]
+
+    def validate_role(self, value):
+        # Reject 'admin' at the API level — admins are created via manage.py only
+        if value == 'admin':
+            raise serializers.ValidationError(
+                'Admin accounts cannot be created via the API.'
+            )
+        return value
+
+    def validate_email(self, value):
+        # Unique email check — gives a friendlier error than the DB constraint
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                'A user with this email address already exists.'
+            )
+        return value
+
+    def validate_phone(self, value):
+        if User.objects.filter(phone=value).exists():
+            raise serializers.ValidationError(
+                'A user with this phone number already exists.'
+            )
+        return value
+
+    def validate(self, data):
+        # Workers must supply base_hourly_rate — customers don't need it
+        if data.get('role') == 'worker' and not data.get('base_hourly_rate'):
+            raise serializers.ValidationError(
+                {'base_hourly_rate': 'This field is required for workers.'}
+            )
+        return data
+
+    def create(self, validated_data):
+        role             = validated_data.pop('role', 'customer')
+        password         = validated_data.pop('password')
+        base_hourly_rate = validated_data.pop('base_hourly_rate', None)
+        city             = validated_data.pop('city', '')
+        categories       = validated_data.pop('categories', [])
+
+        user = User.objects.create_user(
+            password=password,
+            role=role,
+            **validated_data
+        )
+
+        if role == 'worker':
+            profile = WorkerProfile.objects.create(
+                user             = user,
+                base_hourly_rate = base_hourly_rate or 0,
+                city             = city,
+                verification_status = 'pending',
+            )
+            for cat in categories:
+                WorkerService.objects.create(worker_profile=profile, category=cat)
+        else:
+            # role == 'customer'
+            CustomerProfile.objects.create(user=user)
+
+        return user
+
+
+# -------------------------------------------------------
+# USER PROFILE SERIALIZERS
+# -------------------------------------------------------
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    Full read-only user profile — returns user fields plus nested
+    role-specific profile. Used for GET /api/accounts/me/.
+    """
+
+    # Computed property from the model — not a DB column
+    full_name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'first_name', 'last_name', 'full_name',
+            'email', 'phone', 'role', 'account_status',
+            'profile_photo_url', 'email_verified', 'phone_verified',
+            'created_at',
+        ]
+        read_only_fields = fields  # this serializer is read-only
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """
+    Write serializer for PATCH /api/accounts/me/.
+    Only allows the safe subset of fields — role, account_status,
+    and all internal flags are immutable from this endpoint.
+    """
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'phone', 'profile_photo_url']
+
+
+# -------------------------------------------------------
+# WORKER PUBLIC SERIALIZERS
+# -------------------------------------------------------
+
+class WorkerAvailabilitySerializer(serializers.ModelSerializer):
+    """
+    Availability slot for a worker. Explicit fields only —
+    worker_profile is set from the authenticated user in the view.
+    """
+
+    class Meta:
+        model  = WorkerAvailability
+        fields = ['id', 'day_of_week', 'start_time', 'end_time']
+        read_only_fields = ['id']
+
+
+class WorkerToolSerializer(serializers.ModelSerializer):
+    """
+    A tool a worker owns with its price adjustment.
+    tool_name is read-only — shows the tool's name on read responses.
+    """
+
+    # Denormalise tool name so the frontend doesn't need a second request
+    tool_name     = serializers.CharField(source='tool.name', read_only=True)
+    tool_category = serializers.CharField(source='tool.category', read_only=True)
+
+    class Meta:
+        model  = WorkerTool
+        fields = ['id', 'tool', 'tool_name', 'tool_category', 'price_adjustment_pct']
+        read_only_fields = ['id', 'tool_name', 'tool_category']
+
+
+class WorkerPortfolioPhotoSerializer(serializers.ModelSerializer):
+    """
+    Portfolio photo uploaded by a worker to showcase past work.
+    worker_profile is set from the authenticated user in the view.
+    """
+
+    class Meta:
+        model  = WorkerPortfolioPhoto
+        fields = ['id', 'photo_url', 'caption', 'uploaded_at']
+        read_only_fields = ['id', 'uploaded_at']
+
+
+class WorkerListSerializer(serializers.ModelSerializer):
+    """
+    Compact public worker listing used by WorkerListView.
+    Returns only the fields needed for browse/search cards.
+    Keeps the response small on the listing page where dozens
+    of workers are returned at once.
+    """
+
+    full_name         = serializers.CharField(source='user.full_name', read_only=True)
+    profile_photo_url = serializers.CharField(source='user.profile_photo_url', read_only=True)
+    # List of category strings e.g. ['plumber', 'electrician']
+    services          = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = WorkerProfile
+        fields = [
+            'id', 'full_name', 'profile_photo_url',
+            'city', 'avg_rating', 'base_hourly_rate',
+            'is_available', 'verification_status', 'services',
+        ]
+
+    def get_services(self, obj):
+        # Uses prefetch_related('services') from the view — no extra query
+        return list(obj.services.values_list('category', flat=True))
+
+
+class WorkerDetailSerializer(serializers.ModelSerializer):
+    """
+    Full public worker profile — used by WorkerDetailView.
+    Includes portfolio photos, availability schedule, services,
+    and aggregate stats. Heavier than WorkerListSerializer
+    because it's loaded only on the single-worker profile page.
+    """
+
+    full_name         = serializers.CharField(source='user.full_name', read_only=True)
+    email             = serializers.EmailField(source='user.email', read_only=True)
+    profile_photo_url = serializers.CharField(source='user.profile_photo_url', read_only=True)
+
+    services         = WorkerServiceSerializer(many=True, read_only=True)
+    portfolio_photos = WorkerPortfolioPhotoSerializer(many=True, read_only=True)
+    availability     = WorkerAvailabilitySerializer(many=True, read_only=True)
+
+    class Meta:
+        model  = WorkerProfile
+        fields = [
+            'id', 'full_name', 'email', 'profile_photo_url',
+            'bio', 'years_experience', 'city',
+            'base_hourly_rate', 'service_radius_km',
+            'is_available', 'verification_status',
+            'avg_rating', 'total_reviews', 'total_jobs_completed',
+            'services', 'portfolio_photos', 'availability',
+            'created_at',
+        ]
+        read_only_fields = [
+            'verification_status', 'avg_rating',
+            'total_reviews', 'total_jobs_completed',
+        ]
+
+
+# -------------------------------------------------------
+# FAVORITE SERIALIZER
+# -------------------------------------------------------
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    """
+    On read: nested worker summary so the favourites list is self-contained.
+    On write: only worker_profile id is needed — customer is set from the
+    authenticated user in the view, avoiding any user impersonation.
+    """
+
+    # Nested on read — not required on write
+    worker = WorkerListSerializer(source='worker_profile', read_only=True)
+
+    class Meta:
+        model  = Favorite
+        fields = ['id', 'worker_profile', 'worker', 'created_at']
+        read_only_fields = ['id', 'worker', 'created_at']
+        # worker_profile is write-only (just the UUID) — 'worker' is the read view
+        extra_kwargs = {'worker_profile': {'write_only': True}}

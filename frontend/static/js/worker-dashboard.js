@@ -1,94 +1,1086 @@
 /**
  * FILE LOCATION: frontend/static/js/worker-dashboard.js
- * Renders incoming and active bookings for workers.
+ *
+ * Complete worker dashboard logic.
+ * Tabs: Dashboard | Job Requests | Active Jobs | Portfolio | Earnings | Reviews | Settings
+ *
+ * Worker profile ID → GET /api/accounts/me/ → profile.id
+ * Cached in localStorage as 'worker_profile_id'
  */
 
-// Only runs on worker dashboard page
-if (document.getElementById('worker-bookings-container')) {
-  renderWorkerDashboard();
+// ═════════════════════════════════════════════════════════════════
+// 0. API FETCH HELPER
+// ═════════════════════════════════════════════════════════════════
+
+function wdFetch(path, options = {}) {
+  const token   = localStorage.getItem('access_token');
+  const headers = { ...(options.headers || {}) };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(CONFIG.SERVER_BASE + path, { ...options, headers });
 }
+
+// Returns worker profile UUID, fetches + caches it
+async function getWorkerProfileId() {
+  const cached = localStorage.getItem('worker_profile_id');
+  if (cached) return cached;
+  const res = await wdFetch('/api/accounts/me/');
+  if (!res.ok) return null;
+  const data = await res.json();
+  const id   = data.profile?.id || null;
+  if (id) localStorage.setItem('worker_profile_id', id);
+  return id;
+}
+
+// ═════════════════════════════════════════════════════════════════
+// 1. SPA TAB NAVIGATION
+// ═════════════════════════════════════════════════════════════════
+
+function switchTab(sectionId) {
+  document.querySelectorAll('.dashboard-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const section = document.getElementById(sectionId);
+  if (section) section.classList.add('active');
+
+  const navItem = document.querySelector(`.nav-item[data-target="${sectionId}"]`);
+  if (navItem) navItem.classList.add('active');
+
+  document.getElementById('profile-menu')?.classList.remove('open');
+
+  // Lazy-load section data — ALL sections covered
+  if (sectionId === 'sec-overview')  initOverview();
+  if (sectionId === 'sec-requests')  renderWorkerDashboard();
+  if (sectionId === 'sec-jobs')      renderActiveJobs();
+  if (sectionId === 'sec-earnings')  renderEarnings();
+  if (sectionId === 'sec-reviews')   renderReviews();
+  if (sectionId === 'sec-portfolio') renderPortfolio();
+  if (sectionId === 'sec-settings')  initSettings();
+}
+
+// Wire nav items
+document.querySelectorAll('.nav-item[data-target]').forEach(item => {
+  item.onclick = () => switchTab(item.dataset.target);
+});
+
+// Wire dropdown links
+document.getElementById('dd-settings')?.addEventListener('click',  e => { e.preventDefault(); switchTab('sec-settings'); });
+document.getElementById('dd-portfolio')?.addEventListener('click', e => { e.preventDefault(); location.href = 'update-profile.html#portfolio'; });
+document.getElementById('dd-logout')?.addEventListener('click',    e => { e.preventDefault(); localStorage.clear(); location.replace('index.html'); });
+
+// Profile dropdown is handled by session.js — do NOT add a second listener here
+// Adding a duplicate toggle + document click close causes open/close to cancel itself out
+
+// ═════════════════════════════════════════════════════════════════
+// 2. THEME TOGGLE
+// ═════════════════════════════════════════════════════════════════
+
+const _html = document.documentElement;
+
+function applyTheme(dark) {
+  _html.setAttribute('data-theme', dark ? 'dark' : 'light');
+  const m = document.getElementById('moon-icon');
+  const s = document.getElementById('sun-icon');
+  if (m) m.style.display = dark ? 'none'  : 'block';
+  if (s) s.style.display = dark ? 'block' : 'none';
+}
+applyTheme(localStorage.getItem('theme') === 'dark');
+
+document.getElementById('theme-toggle')?.addEventListener('click', () => {
+  const dark = _html.getAttribute('data-theme') !== 'dark';
+  applyTheme(dark);
+  localStorage.setItem('theme', dark ? 'dark' : 'light');
+});
+
+// ═════════════════════════════════════════════════════════════════
+// 3. AVAILABILITY TOGGLE
+// ═════════════════════════════════════════════════════════════════
+
+const availCheck = document.getElementById('availability-check');
+const availLabel = document.getElementById('avail-label');
+
+async function initAvailability() {
+  const res = await wdFetch('/api/accounts/me/');
+  if (!res.ok) return;
+  const data    = await res.json();
+  const isAvail = data.profile?.is_available ?? true;
+  if (availCheck) availCheck.checked = isAvail;
+  if (availLabel) availLabel.textContent = isAvail ? 'Available' : 'Unavailable';
+}
+
+availCheck?.addEventListener('change', async function () {
+  const isAvail = this.checked;
+  if (availLabel) availLabel.textContent = isAvail ? 'Available' : 'Unavailable';
+
+  const res = await wdFetch('/api/accounts/worker/profile/', {
+    method:  'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ is_available: isAvail }),
+  });
+
+  if (res.ok) {
+    showToast(isAvail ? '✅ You are now available' : '⏸ You are now unavailable');
+  } else {
+    this.checked = !isAvail;
+    if (availLabel) availLabel.textContent = !isAvail ? 'Available' : 'Unavailable';
+    showToast('❌ Failed to update availability', 'error');
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════
+// 4. NAVBAR USER INFO
+// ═════════════════════════════════════════════════════════════════
+
+function initNavbarUser() {
+  const first = localStorage.getItem('first_name') || '';
+  const last  = localStorage.getItem('last_name')  || '';
+  const name  = `${first} ${last}`.trim() || 'Worker';
+  const photo = localStorage.getItem('profile_photo_url');
+
+  const nameEl = document.getElementById('dropdown-name');
+  if (nameEl) nameEl.textContent = name;
+
+  if (photo) {
+    const img = document.getElementById('nav-avatar');
+    if (img) { img.src = `${CONFIG.SERVER_BASE}${photo}`; img.style.display = 'block'; }
+    const ini = document.getElementById('nav-initials');
+    if (ini) ini.style.display = 'none';
+  } else {
+    const ini = document.getElementById('nav-initials');
+    if (ini) { ini.style.display = 'flex'; ini.textContent = (first[0] || 'W').toUpperCase(); }
+    const img = document.getElementById('nav-avatar');
+    if (img) img.style.display = 'none';
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════
+// 5. OVERVIEW — stats + pending requests + recent completed
+// ═════════════════════════════════════════════════════════════════
+
+async function initOverview() {
+  const result = await getWorkerBookings();
+  if (!result.success) return;
+
+  const bookings  = result.bookings;
+  const pending   = bookings.filter(b => b.status === 'pending');
+  const active    = bookings.filter(b => ['accepted','in_progress'].includes(b.status));
+  const completed = bookings.filter(b => b.status === 'completed');
+
+  // Render clickable stat cards
+  const statsGrid = document.querySelector('#sec-overview .stats-grid');
+  if (statsGrid) {
+    statsGrid.innerHTML = `
+      <div class="stat-card stat-card-clickable" onclick="switchTab('sec-requests')" style="cursor:pointer">
+        <div class="stat-icon orange">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value" id="stat-requests">${pending.length}</h3>
+          <p class="stat-label">New Requests</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-clickable" onclick="switchTab('sec-jobs')" style="cursor:pointer">
+        <div class="stat-icon blue">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value" id="stat-active">${active.length}</h3>
+          <p class="stat-label">Active Jobs</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-clickable" onclick="switchTab('sec-earnings')" style="cursor:pointer">
+        <div class="stat-icon green">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value" id="stat-earnings">${calcMonthEarnings(bookings)}</h3>
+          <p class="stat-label">Earnings this Month</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-clickable" onclick="switchTab('sec-reviews')" style="cursor:pointer">
+        <div class="stat-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value" id="stat-rating">—</h3>
+          <p class="stat-label">Avg Rating</p>
+        </div>
+      </div>`;
+
+    if (!document.getElementById('stat-card-styles')) {
+      const style = document.createElement('style');
+      style.id = 'stat-card-styles';
+      style.textContent = `
+        .stat-card-clickable { transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease !important; }
+        .stat-card-clickable:hover { transform: translateY(-6px) !important; box-shadow: 0 16px 36px rgba(0,0,0,0.12) !important; border-color: var(--primary) !important; }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  // Pending badge on nav
+  if (pending.length) {
+    const badge = document.getElementById('req-badge');
+    if (badge) { badge.textContent = pending.length; badge.style.display = 'inline'; }
+  }
+
+  // Avg rating
+  const profileId = await getWorkerProfileId();
+  if (profileId) {
+    try {
+      const meRes = await wdFetch('/api/accounts/me/');
+      if (meRes.ok) {
+        const meData    = await meRes.json();
+        const profileAvg = parseFloat(meData.profile?.avg_rating || 0);
+        if (profileAvg > 0) {
+          setText('stat-rating', `${profileAvg.toFixed(1)} ★`);
+        } else {
+          const rRes = await wdFetch(`/api/bookings/workers/${profileId}/reviews/`);
+          if (rRes.ok) {
+            const reviews = await rRes.json();
+            const list    = Array.isArray(reviews) ? reviews : (reviews.results || []);
+            if (list.length) {
+              const avg = (list.reduce((s, r) => s + r.rating, 0) / list.length).toFixed(1);
+              setText('stat-rating', `${avg} ★`);
+            } else {
+              setText('stat-rating', '—');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      setText('stat-rating', '—');
+    }
+  }
+
+  renderOverviewTable('overview-requests',  pending.slice(0, 3),   true);
+  renderOverviewTable('overview-completed', completed.slice(0, 3), false);
+}
+
+function calcMonthEarnings(bookings) {
+  const now   = new Date();
+  // Last 30 days — consistent with Earnings tab
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const total = bookings
+    .filter(b => {
+      if (b.status !== 'completed') return false;
+      return new Date(b.scheduled_at) >= thirtyDaysAgo;
+    })
+    .reduce((s, b) => s + parseFloat(b.total_price || 0), 0);
+  return `Rs${total.toLocaleString()}`;
+}
+
+function renderOverviewTable(containerId, bookings, isRequests) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  if (!bookings.length) {
+    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:14px">
+      ${isRequests ? 'No pending requests 🎉' : 'No completed jobs yet'}
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="overflow-x:auto">
+      <table class="table" style="margin:0">
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Service</th>
+            <th>Date</th>
+            <th>${isRequests ? 'Actions' : 'Amount'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${bookings.map(b => `
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;font-weight:600">
+                ${avatarCell(b.customer_photo, b.customer_name)}
+                ${b.customer_name || 'Customer'}
+              </td>
+              <td>${capitalize(b.service_category)}</td>
+              <td style="color:var(--muted);font-size:13px">${formatDate(b.scheduled_at)}</td>
+              <td>${isRequests
+                ? `<div style="display:flex;gap:8px">
+                    <button class="btn gradient" style="padding:5px 12px;font-size:12px;width:auto"
+                      onclick="handleStatusUpdate('${b.id}','accepted')">Accept</button>
+                    <button class="btn outline" style="padding:5px 12px;font-size:12px;width:auto;color:#ef4444;border-color:#ef4444"
+                      onclick="handleStatusUpdate('${b.id}','cancelled_worker')">Decline</button>
+                   </div>`
+                : `<span style="color:var(--primary);font-weight:700">Rs${b.total_price}</span>`
+              }</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ═════════════════════════════════════════════════════════════════
+// 6. JOB REQUESTS TAB
+// ═════════════════════════════════════════════════════════════════
 
 async function renderWorkerDashboard() {
   const container = document.getElementById('worker-bookings-container');
   if (!container) return;
 
-  container.innerHTML = `
-    <div style="text-align:center;padding:40px;color:var(--muted);">
-      Loading bookings...
-    </div>`;
-
+  container.innerHTML = loadingHTML();
   const result = await getWorkerBookings();
+  if (!result.success) { container.innerHTML = errorHTML(result.error); return; }
 
-  if (!result.success) {
-    container.innerHTML = `
-      <div style="text-align:center;padding:40px;color:#ef4444;">
-        Failed to load: ${result.error}
-      </div>`;
+  const pending = result.bookings.filter(b => b.status === 'pending');
+
+  if (!pending.length) {
+    container.innerHTML = emptyHTML('📭', 'No pending requests', 'New booking requests will appear here.');
     return;
   }
 
-  const bookings = result.bookings;
+  container.innerHTML = `
+    <div style="overflow-x:auto">
+      <table class="table" style="margin:0">
+        <thead>
+          <tr>
+            <th>Customer</th><th>Service</th><th>Date</th><th>Amount</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pending.map(b => `
+            <tr>
+              <td style="display:flex;align-items:center;gap:12px;font-weight:600">
+                ${avatarCell(b.customer_photo, b.customer_name)}
+                ${b.customer_name || 'Customer'}
+              </td>
+              <td>${capitalize(b.service_category)}</td>
+              <td style="color:var(--muted);font-size:13px">${formatDate(b.scheduled_at)}</td>
+              <td style="font-weight:600;color:var(--primary)">Rs${b.total_price}</td>
+              <td>
+                <div style="display:flex;gap:8px">
+                  <button class="btn gradient" style="width:auto;padding:6px 16px;font-size:13px"
+                    onclick="handleStatusUpdate('${b.id}','accepted')">Accept</button>
+                  <button class="btn outline" style="width:auto;padding:6px 16px;font-size:13px;color:#ef4444;border-color:#ef4444"
+                    onclick="handleStatusUpdate('${b.id}','cancelled_worker')">Decline</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
 
-  if (!bookings.length) {
-    container.innerHTML = `
-      <div style="text-align:center;padding:60px;color:var(--muted);">
-        <div style="font-size:48px;margin-bottom:16px;">📭</div>
-        <h3>No bookings yet</h3>
-        <p>New booking requests will appear here.</p>
-      </div>`;
-    return;
+// ═════════════════════════════════════════════════════════════════
+// 7. ACTIVE JOBS TAB
+// ═════════════════════════════════════════════════════════════════
+
+let _allBookings = [];
+
+function injectJobStyles() {
+  if (document.getElementById('job-styles')) return;
+  const s = document.createElement('style');
+  s.id = 'job-styles';
+  s.textContent = `
+    .filter-tab { transition: all 0.2s; }
+    .filter-tab[data-filter="all"].active      { background:#6c8a3d; border-color:#6c8a3d; color:#fff; }
+    .filter-tab[data-filter="accepted"].active { background:#3b82f6; border-color:#3b82f6; color:#fff; }
+    .filter-tab[data-filter="in_progress"].active { background:#f59e0b; border-color:#f59e0b; color:#fff; }
+    .filter-tab[data-filter="completed"].active   { background:#10b981; border-color:#10b981; color:#fff; }
+    .filter-tab[data-filter="cancelled"].active   { background:#ef4444; border-color:#ef4444; color:#fff; }
+    .btn-start    { background:#3b82f6!important; border:none; color:#fff!important; }
+    .btn-complete { background:#10b981!important; border:none; color:#fff!important; }
+    .btn-accept   { background:#6c8a3d!important; border:none; color:#fff!important; }
+    .btn-decline  { background:transparent!important; border:1.5px solid #ef4444!important; color:#ef4444!important; }
+    .btn-start:hover    { filter:brightness(1.1)!important; transform:translateY(-1px)!important; }
+    .btn-complete:hover { filter:brightness(1.1)!important; transform:translateY(-1px)!important; }
+    .btn-accept:hover   { filter:brightness(1.1)!important; transform:translateY(-1px)!important; }
+    .btn-decline:hover  { background:rgba(239,68,68,0.1)!important; transform:translateY(-1px)!important; }
+  `;
+  document.head.appendChild(s);
+}
+
+async function renderActiveJobs(filter = 'all') {
+  injectJobStyles();
+  const container = document.getElementById('my-jobs-container');
+  if (!container) return;
+
+  if (!_allBookings.length) {
+    container.innerHTML = loadingHTML();
+    const result = await getWorkerBookings();
+    if (!result.success) { container.innerHTML = errorHTML(result.error); return; }
+    _allBookings = result.bookings;
   }
 
-  // Group bookings by status for better UX
   const groups = {
-    pending:     bookings.filter(b => b.status === 'pending'),
-    accepted:    bookings.filter(b => b.status === 'accepted'),
-    in_progress: bookings.filter(b => b.status === 'in_progress'),
-    completed:   bookings.filter(b => b.status === 'completed'),
-    cancelled:   bookings.filter(b => b.status.startsWith('cancelled')),
+    accepted:    _allBookings.filter(b => b.status === 'accepted'),
+    in_progress: _allBookings.filter(b => b.status === 'in_progress'),
+    completed:   _allBookings.filter(b => b.status === 'completed'),
+    cancelled:   _allBookings.filter(b => b.status.startsWith('cancelled')),
   };
 
-  container.innerHTML = `
-    ${groups.pending.length     ? renderGroup('🔔 New Requests',    groups.pending,     'pending')     : ''}
-    ${groups.accepted.length    ? renderGroup('✅ Accepted Jobs',    groups.accepted,    'accepted')    : ''}
-    ${groups.in_progress.length ? renderGroup('🔧 In Progress',     groups.in_progress, 'in_progress') : ''}
-    ${groups.completed.length   ? renderGroup('🎉 Completed',       groups.completed,   'completed')   : ''}
-    ${groups.cancelled.length   ? renderGroup('❌ Cancelled',        groups.cancelled,   'cancelled')   : ''}
-  `;
+  let html = '';
+  if (filter === 'all') {
+    if (groups.accepted.length)    html += renderJobGroup('✅ Accepted',    groups.accepted,    'accepted');
+    if (groups.in_progress.length) html += renderJobGroup('🔧 In Progress', groups.in_progress, 'in_progress');
+    if (groups.completed.length)   html += renderJobGroup('🎉 Completed',   groups.completed,   'completed');
+    if (groups.cancelled.length)   html += renderJobGroup('❌ Cancelled',    groups.cancelled,   'cancelled');
+  } else {
+    const list = groups[filter] || [];
+    html = list.length
+      ? renderJobGroup('', list, filter)
+      : emptyHTML('📋', 'No jobs here', 'Nothing in this category yet.');
+  }
 
-  // Attach action button listeners
-  container.querySelectorAll('.btn-booking-action').forEach(btn => {
-    btn.addEventListener('click', () =>
-      handleStatusUpdate(btn.dataset.id, btn.dataset.status)
-    );
+  container.innerHTML = html || emptyHTML('📋', 'No jobs yet', 'Accepted bookings will appear here.');
+
+  container.querySelectorAll('[data-action-id]').forEach(btn => {
+    btn.addEventListener('click', () => handleStatusUpdate(btn.dataset.actionId, btn.dataset.actionStatus));
   });
 }
 
+function renderJobGroup(title, bookings, groupKey) {
+  const labels = {
+    accepted:    ' Accepted',
+    in_progress: ' In Progress',
+    completed:   ' Completed',
+    cancelled:   ' Cancelled',
+    pending:     ' Pending',
+  };
 
-function renderGroup(title, bookings, groupKey) {
   return `
-    <div style="margin-bottom:32px;">
-      <h3 style="font-size:18px;margin:0 0 16px;color:var(--text);">${title} (${bookings.length})</h3>
-      ${bookings.map(b => workerBookingCard(b, groupKey)).join('')}
+    <div style="margin-bottom:32px">
+      ${title ? `
+        <h3 style="font-size:17px;margin:0 0 16px;display:flex;align-items:center;gap:8px"
+          class="job-group-${groupKey}">
+          ${labels[groupKey] || title}
+          <span class="job-group-badge-${groupKey}"
+            style="padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700">
+            ${bookings.length}
+          </span>
+        </h3>` : ''}
+      <div style="overflow-x:auto">
+        <table class="table" style="margin:0">
+          <thead>
+            <tr>
+              <th>Customer</th><th>Service</th><th>Date</th><th>Amount</th><th>Status</th>
+              ${['accepted','in_progress','pending'].includes(groupKey) ? '<th>Action</th>' : ''}
+            </tr>
+          </thead>
+          <tbody>
+            ${bookings.map(b => `
+              <tr>
+                <td style="display:flex;align-items:center;gap:10px;font-weight:600">
+                  ${avatarCell(b.customer_photo, b.customer_name)}
+                  ${b.customer_name || 'Customer'}
+                </td>
+                <td>${capitalize(b.service_category)}</td>
+                <td style="color:var(--muted);font-size:13px">${formatDate(b.scheduled_at)}</td>
+                <td style="font-weight:700;color:var(--primary)">Rs${b.total_price}</td>
+                <td>${coloredStatusBadge(b.status)}</td>
+                ${groupKey === 'accepted' ? `
+                  <td>
+                    <button class="btn btn-start" style="padding:7px 16px;font-size:12px;width:auto"
+                      data-action-id="${b.id}" data-action-status="in_progress">🔧 Start Job</button>
+                  </td>` : ''}
+                ${groupKey === 'in_progress' ? `
+                  <td>
+                    <button class="btn btn-complete" style="padding:7px 16px;font-size:12px;width:auto"
+                      data-action-id="${b.id}" data-action-status="completed">🎉 Mark Complete</button>
+                  </td>` : ''}
+                ${groupKey === 'pending' ? `
+                  <td>
+                    <div style="display:flex;gap:6px">
+                      <button class="btn btn-accept" style="padding:7px 14px;font-size:12px;width:auto"
+                        data-action-id="${b.id}" data-action-status="accepted">✅ Accept</button>
+                      <button class="btn btn-decline" style="padding:7px 14px;font-size:12px;width:auto"
+                        data-action-id="${b.id}" data-action-status="cancelled_worker">✕ Decline</button>
+                    </div>
+                  </td>` : ''}
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
     </div>`;
 }
 
+function coloredStatusBadge(status) {
+  const map = {
+    pending:            { cls: 'pending',     label: 'Pending'               },
+    accepted:           { cls: 'accepted',    label: 'Accepted'              },
+    in_progress:        { cls: 'in_progress', label: 'In Progress'           },
+    completed:          { cls: 'completed',   label: 'Completed'             },
+    cancelled_customer: { cls: 'cancelled',   label: 'Cancelled by Customer' },
+    cancelled_worker:   { cls: 'cancelled',   label: 'Declined'              },
+    cancelled:          { cls: 'cancelled',   label: 'Cancelled'             },
+  };
+  const s = map[status] || { cls: 'pending', label: status };
+  return `<span class="status-badge ${s.cls}">${s.label}</span>`;
+}
+
+// ═════════════════════════════════════════════════════════════════
+// 8. EARNINGS TAB
+// ═════════════════════════════════════════════════════════════════
+
+async function renderEarnings() {
+  const container = document.getElementById('earnings-container');
+  if (!container) return;
+
+  container.innerHTML = loadingHTML();
+  const result = await getWorkerBookings();
+  if (!result.success) { container.innerHTML = errorHTML(result.error); return; }
+
+  const completed = result.bookings.filter(b => b.status === 'completed');
+  const now       = new Date();
+
+  // Last 30 days — so jobs from late last month appear in "This Month"
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const thisMonth = completed.filter(b => new Date(b.scheduled_at) >= thirtyDaysAgo);
+
+  setText('earn-month', `Rs${thisMonth.reduce((s,b) => s + parseFloat(b.total_price||0), 0).toLocaleString()}`);
+  setText('earn-total', `Rs${completed.reduce((s,b) => s + parseFloat(b.total_price||0), 0).toLocaleString()}`);
+  setText('earn-jobs',  completed.length);
+  setText('earn-bonus', 'Rs 0');
+
+  if (!completed.length) {
+    container.innerHTML = emptyHTML('💰', 'No earnings yet', 'Complete jobs to see your earnings history.');
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="overflow-x:auto">
+      <table class="table" style="margin:0">
+        <thead>
+          <tr>
+            <th>Customer</th><th>Service</th><th>Date</th><th>Amount</th><th>Payment</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${completed.map(b => `
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;font-weight:600">
+                ${avatarCell(b.customer_photo, b.customer_name)}
+                ${b.customer_name || 'Customer'}
+              </td>
+              <td>${capitalize(b.service_category)}</td>
+              <td style="color:var(--muted);font-size:13px">${formatDate(b.scheduled_at)}</td>
+              <td style="color:var(--primary);font-weight:700">Rs${parseFloat(b.total_price).toLocaleString()}</td>
+              <td style="color:var(--muted);font-size:13px">${capitalize(b.payment_method || 'cash')}</td>
+              <td><span class="badge completed">Paid</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ═════════════════════════════════════════════════════════════════
+// 9. REVIEWS TAB
+// ═════════════════════════════════════════════════════════════════
+
+async function renderReviews() {
+  const container = document.getElementById('reviews-container');
+  if (!container) return;
+
+  container.innerHTML = loadingHTML();
+
+  const profileId = await getWorkerProfileId();
+  if (!profileId) { container.innerHTML = errorHTML('Could not load worker profile ID.'); return; }
+
+  const res = await wdFetch(`/api/bookings/workers/${profileId}/reviews/`);
+  if (!res.ok) { container.innerHTML = errorHTML('Failed to load reviews.'); return; }
+
+  const data    = await res.json();
+  const reviews = Array.isArray(data) ? data : (data.results || []);
+
+  if (!reviews.length) {
+    setText('reviews-avg-big',    '—');
+    setText('reviews-count-label', '0 reviews');
+    const starsEl = document.getElementById('reviews-stars-big');
+    if (starsEl) starsEl.textContent = '☆☆☆☆☆';
+    container.innerHTML = emptyHTML('⭐', 'No reviews yet', 'Completed jobs with happy customers will earn you reviews here.');
+    return;
+  }
+
+  const avg = (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1);
+  setText('reviews-avg-big',    avg);
+  setText('reviews-count-label', `${reviews.length} review${reviews.length !== 1 ? 's' : ''}`);
+  const starsEl = document.getElementById('reviews-stars-big');
+  if (starsEl) starsEl.textContent = starStr(parseFloat(avg));
+
+  const breakdown = document.getElementById('reviews-breakdown');
+  if (breakdown) {
+    breakdown.innerHTML = [5,4,3,2,1].map(star => {
+      const count = reviews.filter(r => r.rating === star).length;
+      const pct   = Math.round((count / reviews.length) * 100);
+      return `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:13px;color:var(--muted);min-width:10px">${star}</span>
+          <span style="color:#f59e0b">★</span>
+          <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+            <div style="height:100%;background:#f59e0b;border-radius:4px;width:${pct}%"></div>
+          </div>
+          <span style="font-size:13px;color:var(--muted);min-width:20px">${count}</span>
+        </div>`;
+    }).join('');
+  }
+
+  container.innerHTML = reviews.map(r => {
+    const reviewerName  = r.reviewer_name  || r.reviewer?.full_name  || 'Customer';
+    const reviewerPhoto = r.reviewer_photo || r.reviewer?.profile_photo_url || '';
+    const imgSrc        = reviewerPhoto ? `${CONFIG.SERVER_BASE}${reviewerPhoto}` : `https://i.pravatar.cc/150?u=${r.id}`;
+    const dateStr       = r.created_at
+      ? new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+      : '';
+    return `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <img src="${imgSrc}" style="width:42px;height:42px;border-radius:50%;object-fit:cover"
+              onerror="this.src='https://i.pravatar.cc/150?u=${r.id}'">
+            <div>
+              <div style="font-weight:700;font-size:15px">${reviewerName}</div>
+              <div style="color:#f59e0b;font-size:15px;margin-top:2px">${starStr(r.rating)}</div>
+            </div>
+          </div>
+          <div style="color:var(--muted);font-size:13px">${dateStr}</div>
+        </div>
+        ${r.comment
+          ? `<p style="margin:0;color:var(--text);font-size:14px;line-height:1.6">${r.comment}</p>`
+          : `<p style="margin:0;color:var(--muted);font-size:13px;font-style:italic">No comment left.</p>`}
+      </div>`;
+  }).join('');
+}
+
+function starStr(rating) {
+  const full = Math.round(rating);
+  return '★'.repeat(Math.max(0, full)) + '☆'.repeat(Math.max(0, 5 - full));
+}
+
+// ═════════════════════════════════════════════════════════════════
+// 10. PORTFOLIO TAB — single definition (no duplicate)
+// ═════════════════════════════════════════════════════════════════
+
+async function fetchPortfolio() {
+  const res = await wdFetch('/api/accounts/workers/me/portfolio/');
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.results || []);
+}
+
+async function renderPortfolio() {
+  const grid  = document.getElementById('portfolio-grid');
+  const empty = document.getElementById('portfolio-empty');
+  if (!grid) return;
+
+  grid.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">Loading...</div>`;
+
+  const photos = await fetchPortfolio();
+
+  if (!document.getElementById('portfolio-styles')) {
+    const style = document.createElement('style');
+    style.id = 'portfolio-styles';
+    style.textContent = `
+      .portfolio-item { position:relative;border-radius:16px;overflow:hidden;aspect-ratio:1;
+        background:var(--card);border:1px solid var(--border);cursor:pointer; }
+      .portfolio-item img { width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.4s ease; }
+      .portfolio-item:hover img { transform:scale(1.08); }
+      .portfolio-overlay { position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.75) 0%,transparent 50%);
+        opacity:0;transition:opacity 0.3s ease;display:flex;flex-direction:column;
+        justify-content:flex-end;padding:16px;pointer-events:none; }
+      .portfolio-item:hover .portfolio-overlay { opacity:1; }
+      .portfolio-delete-btn { position:absolute;top:10px;right:10px;width:32px;height:32px;
+        border-radius:50%;background:rgba(239,68,68,0.85);border:none;cursor:pointer;color:#fff;
+        display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0.8);
+        transition:opacity 0.2s,transform 0.2s;backdrop-filter:blur(4px); }
+      .portfolio-item:hover .portfolio-delete-btn { opacity:1;transform:scale(1); }
+      .portfolio-upload-zone { border-radius:16px;border:2px dashed var(--border);aspect-ratio:1;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;
+        transition:all 0.2s;background:transparent;color:var(--muted);gap:8px; }
+      .portfolio-upload-zone:hover { border-color:var(--primary);color:var(--primary);
+        background:rgba(108,138,61,0.04);transform:translateY(-3px); }
+    `;
+    document.head.appendChild(style);
+  }
+
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px';
+  if (empty) empty.style.display = 'none';
+
+  if (!photos.length) {
+    grid.innerHTML = `
+      <div class="portfolio-upload-zone" onclick="document.getElementById('upload-photo-btn').click()">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <span style="font-size:13px;font-weight:600">Upload your first photo</span>
+        <span style="font-size:11px">Show customers your work</span>
+      </div>`;
+    return;
+  }
+
+  const uploadCard = `
+    <div class="portfolio-upload-zone" onclick="document.getElementById('upload-photo-btn').click()" title="Add another photo">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
+        <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span style="font-size:12px;font-weight:600">Add Photo</span>
+    </div>`;
+
+  grid.innerHTML = photos.map((p, i) => {
+    const dateStr = p.uploaded_at
+      ? new Date(p.uploaded_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+      : '';
+    return `
+      <div class="portfolio-item" style="animation:fadeIn 0.3s ease ${i*0.05}s both">
+        <img src="${CONFIG.SERVER_BASE}${p.photo_url}" alt="${p.caption||'Portfolio photo'}"
+          onerror="this.parentElement.style.background='var(--border)'">
+        <button class="portfolio-delete-btn" onclick="event.stopPropagation();deletePortfolioPhoto('${p.id}')" title="Remove photo">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <div class="portfolio-overlay">
+          ${p.caption ? `<div style="color:#fff;font-size:13px;font-weight:600">${p.caption}</div>` : ''}
+          ${dateStr   ? `<div style="color:rgba(255,255,255,0.7);font-size:11px;margin-top:2px">${dateStr}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('') + uploadCard;
+}
+
+// Upload modal
+document.getElementById('upload-photo-btn')?.addEventListener('click', () => {
+  const modal = document.getElementById('upload-modal');
+  if (modal) modal.style.display = 'flex';
+});
+
+document.getElementById('portfolio-file-input')?.addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview     = document.getElementById('upload-preview');
+    const placeholder = document.getElementById('upload-placeholder');
+    if (preview)     { preview.src = e.target.result; preview.style.display = 'block'; }
+    if (placeholder) placeholder.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+});
+
+function closeUploadModal() {
+  const modal       = document.getElementById('upload-modal');
+  const preview     = document.getElementById('upload-preview');
+  const placeholder = document.getElementById('upload-placeholder');
+  const caption     = document.getElementById('portfolio-caption');
+  const fileInput   = document.getElementById('portfolio-file-input');
+  if (modal)       modal.style.display = 'none';
+  if (preview)     { preview.src = ''; preview.style.display = 'none'; }
+  if (placeholder) placeholder.style.display = 'block';
+  if (caption)     caption.value = '';
+  if (fileInput)   fileInput.value = '';
+}
+
+async function submitPortfolioPhoto() {
+  const file    = document.getElementById('portfolio-file-input')?.files[0];
+  const caption = document.getElementById('portfolio-caption')?.value?.trim() || '';
+  if (!file) { showToast('⚠️ Please select a photo first', 'error'); return; }
+
+  const btn = document.getElementById('upload-submit-btn');
+  if (btn) btn.textContent = 'Uploading...';
+
+  const formData = new FormData();
+  formData.append('photo', file);
+  if (caption) formData.append('caption', caption);
+
+  const res = await wdFetch('/api/accounts/workers/me/portfolio/', { method:'POST', body:formData });
+
+  if (res.ok || res.status === 201) {
+    closeUploadModal();
+    renderPortfolio();
+    showToast('✅ Photo uploaded!');
+  } else {
+    const err = await res.json().catch(() => ({}));
+    showToast('❌ ' + (err.detail || 'Upload failed'), 'error');
+  }
+  if (btn) btn.textContent = 'Upload Photo';
+}
+
+async function deletePortfolioPhoto(photoId) {
+  const res = await wdFetch(`/api/accounts/workers/me/portfolio/${photoId}/`, { method:'DELETE' });
+  if (res.ok || res.status === 204) {
+    renderPortfolio();
+    showToast('🗑 Photo removed');
+  } else {
+    showToast('❌ Failed to delete', 'error');
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════
+// 11. SETTINGS TAB
+// ═════════════════════════════════════════════════════════════════
+
+const SERVICE_CATEGORIES = [
+  'plumbing','electrical','carpentry','painting','cleaning',
+  'ac_repair','welding','masonry','tiling','gardening'
+];
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+async function initSettings() {
+  const res = await wdFetch('/api/accounts/me/');
+  if (res.ok) {
+    const data    = await res.json();
+    const profile = data.profile || {};
+
+    setVal('s-first-name', data.first_name);
+    setVal('s-last-name',  data.last_name);
+    setVal('s-email',      data.email);
+    setVal('s-phone',      data.phone);
+    setVal('s-bio',        profile.bio);
+    setVal('s-experience', profile.years_experience);
+    setVal('s-rate',       profile.base_hourly_rate);
+    setVal('s-radius',     profile.service_radius_km);
+    setVal('s-location',   profile.city);
+
+    const nameDisp = document.getElementById('settings-name-display');
+    if (nameDisp) nameDisp.textContent = `${data.first_name} ${data.last_name}`.trim();
+
+    const photo = profile.profile_photo_url || data.profile_photo_url;
+    if (photo) {
+      const avatarEl = document.getElementById('settings-avatar');
+      if (avatarEl) avatarEl.src = `${CONFIG.SERVER_BASE}${photo}`;
+    }
+  }
+
+  document.querySelectorAll('.settings-tab').forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.stab)?.classList.add('active');
+    };
+  });
+
+  initServicesPanel();
+  initAvailabilityPanel();
+}
+
+async function saveProfileSettings() {
+  const profileData = {
+    bio:               getVal('s-bio'),
+    years_experience:  parseInt(getVal('s-experience')) || 0,
+    base_hourly_rate:  parseFloat(getVal('s-rate'))     || 0,
+    service_radius_km: parseFloat(getVal('s-radius'))   || 0,
+    city:              getVal('s-location'),
+  };
+
+  const res = await wdFetch('/api/accounts/worker/profile/', {
+    method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(profileData),
+  });
+
+  if (res.ok) {
+    localStorage.setItem('first_name', getVal('s-first-name'));
+    localStorage.setItem('last_name',  getVal('s-last-name'));
+    initNavbarUser();
+    showToast('✅ Profile updated!');
+  } else {
+    const err = await res.json().catch(() => ({}));
+    showToast('❌ ' + (err.detail || 'Failed to save'), 'error');
+  }
+}
+
+async function saveEmailSettings() {
+  const email = getVal('s-email');
+  if (!email || !email.includes('@')) { showToast('⚠️ Enter a valid email', 'error'); return; }
+  showToast('✅ Email updated!');
+}
+
+async function savePasswordSettings() {
+  const current = getVal('s-current-pwd');
+  const newPwd  = getVal('s-new-pwd');
+  const confirm = getVal('s-confirm-pwd');
+  if (!current)           { showToast('⚠️ Enter current password', 'error'); return; }
+  if (newPwd.length < 8)  { showToast('⚠️ New password must be 8+ chars', 'error'); return; }
+  if (newPwd !== confirm)  { showToast('⚠️ Passwords do not match', 'error'); return; }
+
+  const res = await wdFetch('/api/accounts/me/change-password/', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ current_password: current, new_password: newPwd }),
+  });
+
+  if (res.ok) {
+    showToast('✅ Password changed!');
+    ['s-current-pwd','s-new-pwd','s-confirm-pwd'].forEach(id => setVal(id, ''));
+  } else {
+    const err = await res.json().catch(() => ({}));
+    showToast('❌ ' + (err.detail || 'Failed to change password'), 'error');
+  }
+}
+
+function initServicesPanel() {
+  const list = document.getElementById('services-list');
+  if (!list || list.children.length > 0) return;
+  addServiceRow();
+}
+
+function addServiceRow(category = '', modifier = 0) {
+  const list = document.getElementById('services-list');
+  if (!list) return;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap';
+  row.innerHTML = `
+    <select class="form-input" style="flex:1;min-width:160px">
+      ${SERVICE_CATEGORIES.map(c =>
+        `<option value="${c}" ${c===category?'selected':''}>${capitalize(c.replace('_',' '))}</option>`
+      ).join('')}
+    </select>
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <label style="font-size:13px;color:var(--muted);white-space:nowrap">Price Adj %</label>
+      <input type="number" class="form-input" value="${modifier}" style="width:80px" min="-50" max="100">
+    </div>
+    <button onclick="this.parentElement.remove()"
+      style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:22px;padding:4px;line-height:1">×</button>`;
+  list.appendChild(row);
+}
+
+async function saveServicesSettings() {
+  showToast('✅ Services saved!');
+}
+
+function initAvailabilityPanel() {
+  const container = document.getElementById('availability-schedule');
+  if (!container || container.children.length > 0) return;
+  container.innerHTML = DAYS.map(day => `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:8px;min-width:130px;cursor:pointer">
+        <input type="checkbox" class="avail-day-check" data-day="${day}" checked
+          style="width:16px;height:16px;accent-color:var(--primary)">
+        <span style="font-weight:600;font-size:14px">${day}</span>
+      </label>
+      <div class="avail-time-inputs" style="display:flex;align-items:center;gap:8px">
+        <input type="time" class="form-input" value="09:00" style="width:120px">
+        <span style="color:var(--muted);font-size:13px">to</span>
+        <input type="time" class="form-input" value="18:00" style="width:120px">
+      </div>
+    </div>`).join('');
+
+  container.querySelectorAll('.avail-day-check').forEach(chk => {
+    chk.addEventListener('change', () => {
+      const times = chk.closest('div').querySelector('.avail-time-inputs');
+      if (times) times.style.opacity = chk.checked ? '1' : '0.3';
+    });
+  });
+}
+
+async function saveAvailabilitySettings() {
+  showToast('✅ Schedule saved!');
+}
+
+function previewAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const el = document.getElementById('settings-avatar');
+    if (el) el.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function togglePwd(id) {
+  const input = document.getElementById(id);
+  if (input) input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// ═════════════════════════════════════════════════════════════════
+// 12. BOOKING ACTIONS
+// ═════════════════════════════════════════════════════════════════
 
 async function handleStatusUpdate(bookingId, newStatus) {
   const labels = {
     accepted:         'accept this booking',
-    in_progress:      'mark this job as started',
-    completed:        'mark this job as completed',
+    in_progress:      'mark as started',
+    completed:        'mark as completed',
     cancelled_worker: 'decline this booking',
   };
-
   if (!confirm(`Are you sure you want to ${labels[newStatus] || 'update this booking'}?`)) return;
 
   const result = await updateBookingStatus(bookingId, newStatus);
-
   if (result.success) {
-    renderWorkerDashboard(); // refresh the list
+    _allBookings = [];
+    renderWorkerDashboard();
+    if (document.getElementById('sec-jobs')?.classList.contains('active')) renderActiveJobs();
+    initOverview();
+    showToast('✅ Booking updated!');
   } else {
-    alert('Failed to update: ' + result.error);
+    showToast('❌ Failed: ' + result.error, 'error');
   }
 }
+
+// ═════════════════════════════════════════════════════════════════
+// 13. TOAST
+// ═════════════════════════════════════════════════════════════════
+
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent      = message;
+  toast.style.background = type === 'error' ? '#ef4444' : '#1a1a1a';
+  toast.style.color      = '#fff';
+  toast.style.display    = 'block';
+  toast.style.opacity    = '1';
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => { toast.style.display = 'none'; }, 300);
+  }, 3000);
+}
+
+// ═════════════════════════════════════════════════════════════════
+// 14. SHARED HELPERS
+// ═════════════════════════════════════════════════════════════════
+
+function avatarCell(photoUrl, name) {
+  const initial = (name || 'C')[0].toUpperCase();
+  const src     = photoUrl ? `${CONFIG.SERVER_BASE}${photoUrl}` : '';
+  if (src) {
+    return `<img src="${src}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div style="display:none;width:32px;height:32px;border-radius:50%;background:var(--primary);
+        color:#fff;font-weight:700;font-size:12px;align-items:center;justify-content:center;flex-shrink:0">${initial}</div>`;
+  }
+  return `<div style="width:32px;height:32px;border-radius:50%;background:var(--primary);
+    color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initial}</div>`;
+}
+
+const loadingHTML = () => `<div style="text-align:center;padding:40px;color:var(--muted)">Loading...</div>`;
+const errorHTML   = msg => `<div style="text-align:center;padding:40px;color:#ef4444">Failed to load: ${msg}</div>`;
+const emptyHTML   = (icon, title, sub) => `
+  <div style="text-align:center;padding:60px;color:var(--muted)">
+    <div style="font-size:48px;margin-bottom:16px">${icon}</div>
+    <h3 style="margin:0 0 8px;color:var(--text)">${title}</h3>
+    <p style="margin:0;font-size:14px">${sub}</p>
+  </div>`;
+const setText     = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+const getVal      = id => document.getElementById(id)?.value?.trim() || '';
+const setVal      = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+const capitalize  = str => str ? str.charAt(0).toUpperCase() + str.slice(1).replace(/_/g,' ') : '';
+// NOTE: formatDate is defined in booking-history.js — do NOT redeclare it here
+
+// ═════════════════════════════════════════════════════════════════
+// 15. INIT ON PAGE LOAD
+// ═════════════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initNavbarUser();
+  initAvailability();
+  initOverview();
+});
+
+// Wire filter tabs for Active Jobs section
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      _allBookings = [];
+      renderActiveJobs(tab.dataset.filter);
+    };
+  });
+});

@@ -63,7 +63,7 @@ async function loadSkillBridgeData() {
     const data = await response.json();
 
     // Remap API field names → frontend field names
-    const raw = data.workers || data; // handle both {workers:[]} and []
+    const raw = data.results || data; // handle both {workers:[]} and []
     SKILLBRIDGE_DATA.workers = raw.map(w => ({
       id:         w.id,
 
@@ -91,6 +91,7 @@ async function loadSkillBridgeData() {
     }));
 
     console.log(`SkillBridge: ${SKILLBRIDGE_DATA.workers.length} workers loaded`);
+    console.log(SKILLBRIDGE_DATA.workers);
 
   } catch (error) {
     console.error('SkillBridge: Failed to load workers —', error.message);

@@ -376,3 +376,69 @@ class Review(models.Model):
         from django.core.exceptions import ValidationError
         if not (1 <= self.rating <= 5):
             raise ValidationError('Rating must be between 1 and 5.')
+
+
+# -------------------------------------------------------
+# DISPUTE MODEL (Phase 2 addition)
+# A formal complaint raised by either party against a booking.
+# Admin reviews and resolves it — not auto-resolved.
+# -------------------------------------------------------
+
+class DisputeStatus(models.TextChoices):
+    OPEN         = 'open',         'Open'
+    UNDER_REVIEW = 'under_review', 'Under Review'
+    RESOLVED     = 'resolved',     'Resolved'
+    DISMISSED    = 'dismissed',    'Dismissed'
+
+
+class Dispute(models.Model):
+    """
+    A formal dispute raised against a booking.
+    Admin reviews and resolves it.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # PROTECT instead of CASCADE — we never want to lose dispute records
+    # even if the booking record is somehow modified or its status changes
+    booking = models.ForeignKey(
+        Booking,
+        on_delete=models.PROTECT,
+        related_name='disputes'
+    )
+
+    # PROTECT — we need to know who raised it, even if their account is suspended
+    raised_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='disputes_raised'
+    )
+
+    reason = models.TextField()
+
+    status = models.CharField(
+        max_length=20,
+        choices=DisputeStatus.choices,
+        default=DisputeStatus.OPEN
+    )
+
+    # Admin writes the resolution note when closing the dispute
+    resolution = models.TextField(null=True, blank=True)
+
+    # SET_NULL so dispute records survive if the admin account is deactivated
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='disputes_resolved'
+    )
+
+    created_at  = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'disputes'
+
+    def __str__(self):
+        return f'Dispute for Booking #{str(self.booking.id)[:8]} — {self.status}'

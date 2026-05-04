@@ -10,11 +10,9 @@
   <script src="../static/js/theme.js"></script>
 </head>
 <body>
-  <!-- Mobile Sidebar Overlay -->
   <div class="mobile-overlay" id="mobile-overlay"></div>
 
   <header class="top-navbar">
-    <!-- Left: Brand & Main Links -->
     <div style="display: flex; align-items: center; gap: 24px;">
       <a href="home.html" class="navbar-brand">
         <div class="logo-mark">SB</div>
@@ -28,7 +26,6 @@
       </nav>
     </div>
 
-    <!-- Center: Persistent Search Bar -->
     <div class="navbar-search">
       <div class="navbar-search-container">
         <svg class="navbar-search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -40,7 +37,6 @@
       </div>
     </div>
 
-    <!-- Right: Actions & Theme Toggle -->
     <div class="navbar-actions">
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
         <svg id="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -58,7 +54,6 @@
           <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
         </svg>
       </button>
-
       <div class="profile-dropdown-container">
         <div class="profile-trigger" id="profile-trigger">
           <img src="https://i.pravatar.cc/150?img=68" class="user-avatar" alt="Avatar">
@@ -67,62 +62,24 @@
     </div>
   </header>
 
-  <!-- MAIN PAGE -->
   <main style="max-width:1920px; width:100%; margin:24px auto 64px auto; padding:0 4%; min-height:100vh;">
-
-    <!-- JS will inject the review UI here -->
     <div id="review-container" style="width:100%; max-width:640px; margin:0 auto;">
-
-      <!-- Loading state -->
       <div style="padding:40px; text-align:center; color:var(--muted);">
         Loading review form...
       </div>
-
     </div>
-
   </main>
 
-   <!-- SCRIPTS -->
-  <!-- load data from database -->
+  <!-- SCRIPTS: config first, then data, then session, then page logic -->
   <script src="../static/js/config.js"></script>
   <script src="../static/js/api.js"></script>
   <script src="../static/js/data.js"></script>
-
-  <script src="../static/js/booking.js"></script> 
-  <script src="../static/js/profile.js"></script>
-  <script src="../static/js/dashboard.js"></script>
-  <script src="../static/js/footer.js"></script>
-  <script src="../static/js/search.js"></script>
   <script src="../static/js/session.js"></script>
-  <script>
-    const stars = document.querySelectorAll('.star');
-    const ratingInput = document.getElementById('review-rating');
-
-    stars.forEach(star => {
-      star.addEventListener('click', () => {
-        const value = star.dataset.value;
-        ratingInput.value = value;
-        stars.forEach(s => {
-          if (s.dataset.value <= value) {
-            s.textContent = '★';
-            s.style.color = '#f59e0b';
-          } else {
-            s.textContent = '☆';
-            s.style.color = '#ccc';
-          }
-        });
-      });
-    });
-
-    // Set default 5 stars
-    stars.forEach(s => {
-      s.textContent = '★';
-      s.style.color = '#f59e0b';
-    });
-  </script>
+  <script src="../static/js/search.js"></script>
+  <script src="../static/js/footer.js"></script>
 
   <script>
-    // Only runs on review page
+    // Review page logic — runs after skillbridge-ready fires from data.js
     if (document.getElementById('review-container')) {
       window.addEventListener('skillbridge-ready', function () {
         const workerId = new URLSearchParams(location.search).get('worker');
@@ -156,54 +113,55 @@
             </div>
 
             <label style="font-weight:600;font-size:16px;display:block;margin-bottom:12px;color:var(--text);">Rating</label>
-            <div id="star-rating" style="font-size: 28px; margin-bottom: 20px; cursor: pointer;">
-              <span class="star" data-value="1" style="cursor: pointer;">★</span>
-              <span class="star" data-value="2" style="cursor: pointer;">★</span>
-              <span class="star" data-value="3" style="cursor: pointer;">★</span>
-              <span class="star" data-value="4" style="cursor: pointer;">★</span>
-              <span class="star" data-value="5" style="cursor: pointer;">★</span>
+            <div id="star-rating" style="font-size:28px;margin-bottom:20px;cursor:pointer;">
+              <span class="star" data-value="1" style="cursor:pointer;">★</span>
+              <span class="star" data-value="2" style="cursor:pointer;">★</span>
+              <span class="star" data-value="3" style="cursor:pointer;">★</span>
+              <span class="star" data-value="4" style="cursor:pointer;">★</span>
+              <span class="star" data-value="5" style="cursor:pointer;">★</span>
             </div>
             <input type="hidden" id="review-rating" value="5">
 
             <label style="font-weight:600;font-size:16px;display:block;margin-bottom:12px;color:var(--text);">Write your review</label>
-            <textarea id="review-text" placeholder="Share your experience with this professional..." style="width:100%;height:140px;padding:14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;resize:none;margin-bottom:24px;"></textarea>
-            <button class="btn gradient" id="submit-review" style="width:100%;padding:14px;border-radius:10px;font-weight:600;font-size:16px;background:var(--primary);color:white;border:none;cursor:pointer;">Submit Review</button>
+            <textarea id="review-text" placeholder="Share your experience with this professional..."
+              style="width:100%;height:140px;padding:14px;border-radius:8px;border:1px solid var(--border);
+              background:var(--card);color:var(--text);font-size:14px;resize:none;margin-bottom:24px;box-sizing:border-box;"></textarea>
+            <button class="btn gradient" id="submit-review"
+              style="width:100%;padding:14px;border-radius:10px;font-weight:600;font-size:16px;">
+              Submit Review
+            </button>
           </div>
         `;
 
-        // Re-attach star event listeners
-        const newStars = container.querySelectorAll('.star');
-        const newRatingInput = container.querySelector('#review-rating');
-        newStars.forEach(star => {
+        // Wire star rating
+        const stars          = container.querySelectorAll('.star');
+        const ratingInput    = container.querySelector('#review-rating');
+
+        // Default all gold
+        stars.forEach(s => { s.textContent = '★'; s.style.color = '#f59e0b'; });
+
+        stars.forEach(star => {
           star.addEventListener('click', () => {
             const value = star.dataset.value;
-            newRatingInput.value = value;
-            newStars.forEach(s => {
-              if (s.dataset.value <= value) {
-                s.textContent = '★';
-                s.style.color = '#f59e0b';
-              } else {
-                s.textContent = '☆';
-                s.style.color = '#ccc';
-              }
+            ratingInput.value = value;
+            stars.forEach(s => {
+              s.textContent = s.dataset.value <= value ? '★' : '☆';
+              s.style.color  = s.dataset.value <= value ? '#f59e0b' : '#ccc';
             });
           });
         });
 
-        // Submit review
+        // Submit
         container.querySelector('#submit-review').addEventListener('click', () => {
-          const rating = newRatingInput.value;
-          const text = container.querySelector('#review-text').value.trim();
-          if (!text) {
-            alert('Please write a review.');
-            return;
-          }
-          alert(`Review submitted! Rating: ${rating}, Text: ${text}`);
+          const rating = ratingInput.value;
+          const text   = container.querySelector('#review-text').value.trim();
+          if (!text) { alert('Please write a review.'); return; }
+          alert(`Review submitted! Rating: ${rating}`);
           location.href = 'home.html';
         });
       });
     }
   </script>
+  
 </body>
 </html>
-

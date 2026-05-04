@@ -2,7 +2,23 @@
  * FILE LOCATION: frontend/static/js/booking-history.js
  * Provides booking data loading and management for both customer and worker dashboards.
  * Contains API functions and utility functions for booking history display.
+ *
+ * FIX: Added safe DEFAULT_AVATAR fallback in case CONFIG.DEFAULT_AVATAR
+ * is missing or points to a 404 path.
  */
+
+// =====================================
+// SAFE AVATAR FALLBACK
+// If CONFIG.DEFAULT_AVATAR is missing or broken, use a reliable fallback.
+// =====================================
+function getDefaultAvatar() {
+  // Try CONFIG first, then a relative path, then a data URI as last resort
+  if (typeof CONFIG !== 'undefined' && CONFIG.DEFAULT_AVATAR) {
+    return CONFIG.DEFAULT_AVATAR;
+  }
+  // Use a reliable relative path — adjust if your folder structure differs
+  return '../static/images/default-avatar.png';
+}
 
 // =====================================
 // API FUNCTIONS
@@ -93,10 +109,7 @@ async function submitReview(bookingId, rating, comment) {
     const response = await fetch(CONFIG.API_BASE + `/bookings/${bookingId}/review/`, {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({
-        rating: rating,
-        comment: comment
-      })
+      body: JSON.stringify({ rating, comment })
     });
 
     const data = await response.json();
@@ -125,17 +138,18 @@ function authHeaders() {
 
 function statusBadge(status) {
   const badges = {
-    pending:     '<span class="badge pending">Pending</span>',
-    accepted:    '<span class="badge accepted">Accepted</span>',
-    in_progress: '<span class="badge in-progress">In Progress</span>',
-    completed:   '<span class="badge completed">Completed</span>',
+    pending:            '<span class="badge pending">Pending</span>',
+    accepted:           '<span class="badge accepted">Accepted</span>',
+    in_progress:        '<span class="badge in-progress">In Progress</span>',
+    completed:          '<span class="badge completed">Completed</span>',
     cancelled_customer: '<span class="badge cancelled">Cancelled by Customer</span>',
     cancelled_worker:   '<span class="badge cancelled">Declined</span>',
-    cancelled:   '<span class="badge cancelled">Cancelled</span>',
+    cancelled:          '<span class="badge cancelled">Cancelled</span>',
   };
   return badges[status] || `<span class="badge">${status}</span>`;
 }
 
+// formatDate — single source of truth (used by worker-dashboard.js and customer-dashboard.js)
 function formatDate(dateString) {
   try {
     const date = new Date(dateString);
@@ -164,11 +178,11 @@ function formatDate(dateString) {
 // =====================================
 
 function customerBookingCard(b) {
+  const defaultAvatar = getDefaultAvatar();
   const photo = b.worker_photo
     ? CONFIG.SERVER_BASE + b.worker_photo
-    : CONFIG.DEFAULT_AVATAR;
+    : defaultAvatar;
 
-  // Action buttons based on status
   let actionBtn = '';
   if (b.status === 'pending' || b.status === 'accepted') {
     actionBtn = `
@@ -188,20 +202,16 @@ function customerBookingCard(b) {
 
   return `
     <div style="display:flex;gap:20px;padding:20px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;flex-wrap:wrap;">
-
-      <!-- Worker Photo -->
-      <img src="${photo}" alt="${b.worker_name}"
+      <img src="${photo}" alt="${b.worker_name || 'Worker'}"
            style="width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;"
-           onerror="this.src='${CONFIG.DEFAULT_AVATAR}'">
-
-      <!-- Booking Info -->
+           onerror="this.src='${defaultAvatar}'">
       <div style="flex:1;min-width:200px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
-          <h3 style="margin:0;font-size:17px;">${b.worker_name}</h3>
+          <h3 style="margin:0;font-size:17px;">${b.worker_name || 'Worker'}</h3>
           ${statusBadge(b.status)}
         </div>
         <div style="font-size:14px;color:var(--muted);margin-bottom:4px;">
-          🔧 ${b.service_category.charAt(0).toUpperCase() + b.service_category.slice(1)}
+          🔧 ${(b.service_category || '').charAt(0).toUpperCase() + (b.service_category || '').slice(1)}
           &nbsp;•&nbsp;
           📅 ${formatDate(b.scheduled_at)}
         </div>
@@ -209,8 +219,6 @@ function customerBookingCard(b) {
           💰 Rs${b.total_price} &nbsp;•&nbsp; 💳 ${b.payment_method || 'cash'}
         </div>
       </div>
-
-      <!-- Actions -->
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;justify-content:center;">
         <a href="booking-detail.html?id=${b.id}"
            style="font-size:13px;color:var(--primary);text-decoration:none;font-weight:600;">
@@ -218,16 +226,15 @@ function customerBookingCard(b) {
         </a>
         ${actionBtn}
       </div>
-
     </div>`;
 }
 
 function workerBookingCard(b, groupKey) {
+  const defaultAvatar = getDefaultAvatar();
   const photo = b.customer_photo
     ? CONFIG.SERVER_BASE + b.customer_photo
-    : CONFIG.DEFAULT_AVATAR;
+    : defaultAvatar;
 
-  // Action buttons based on current status
   const actions = {
     pending: `
       <button class="btn-booking-action btn gradient"
@@ -256,18 +263,16 @@ function workerBookingCard(b, groupKey) {
 
   return `
     <div style="display:flex;gap:20px;padding:20px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;flex-wrap:wrap;">
-
-      <img src="${photo}" alt="${b.customer_name}"
+      <img src="${photo}" alt="${b.customer_name || 'Customer'}"
            style="width:60px;height:60px;border-radius:50%;object-fit:cover;flex-shrink:0;"
-           onerror="this.src='${CONFIG.DEFAULT_AVATAR}'">
-
+           onerror="this.src='${defaultAvatar}'">
       <div style="flex:1;min-width:200px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap;">
-          <h4 style="margin:0;font-size:16px;">${b.customer_name}</h4>
+          <h4 style="margin:0;font-size:16px;">${b.customer_name || 'Customer'}</h4>
           ${statusBadge(b.status)}
         </div>
         <div style="font-size:14px;color:var(--muted);margin-bottom:4px;">
-          🔧 ${b.service_category.charAt(0).toUpperCase() + b.service_category.slice(1)}
+          🔧 ${(b.service_category || '').charAt(0).toUpperCase() + (b.service_category || '').slice(1)}
           &nbsp;•&nbsp;
           📅 ${formatDate(b.scheduled_at)}
         </div>
@@ -275,7 +280,6 @@ function workerBookingCard(b, groupKey) {
           💰 Rs${b.total_price}
         </div>
       </div>
-
       <div style="display:flex;flex-direction:column;gap:8px;justify-content:center;">
         ${actions[groupKey] || ''}
         <a href="booking-detail.html?id=${b.id}"
@@ -283,6 +287,5 @@ function workerBookingCard(b, groupKey) {
           View Details →
         </a>
       </div>
-
     </div>`;
 }

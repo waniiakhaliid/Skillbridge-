@@ -18,6 +18,9 @@ from accounts.tokens import SkillBridgeTokenView  # POST /api/auth/login/  → r
 from accounts.views import LogoutView
 from django.conf import settings
 from django.conf.urls.static import static
+from chatbot.views import gemini_proxy
+
+
 
 urlpatterns = [
     # Django's built-in admin panel at /admin/
@@ -40,6 +43,15 @@ urlpatterns = [
     # -------------------------------------------------------
     path('api/accounts/', include('accounts.urls')),
     path('api/bookings/', include('bookings.urls')),
+
+    # -------------------------------------------------------
+    # PHASE-2 APP ROUTES (appended — existing paths above untouched)
+    # -------------------------------------------------------
+    path('api/locations/',     include('locations.urls')),
+    path('api/payments/',      include('payments.urls')),
+    path('api/notifications/', include('notifications.urls')),
+    path('api/chatbot/',       include('chatbot.urls')),
+   
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

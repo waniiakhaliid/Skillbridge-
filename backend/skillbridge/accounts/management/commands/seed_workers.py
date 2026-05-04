@@ -63,46 +63,57 @@ DEFAULT_PASSWORD = '123456'
 # Split 'name' into first_name / last_name
 # 'photo' is just the filename (e.g. 'hasnain.jpeg')
 # ---------------------------------------------------------------------------
+#
+# PRICING GUIDE (PKR per hour, 2024-25 Pakistan market rates):
+#
+#   Plumbers     Rs. 700  – 2,500   Basic repairs → commercial/experienced
+#   Electricians Rs. 1,000 – 3,000  Entry-level → industrial/certified
+#   Carpenters   Rs. 900  – 2,500   Basic → custom luxury woodwork
+#   Mechanics    Rs. 1,200 – 3,500  General → high-performance/diesel specialist
+#
+#   Price influenced by: years of experience, city (Karachi/Lahore > Rwp/Wah),
+#   verification status, and specialisation premium.
+# ---------------------------------------------------------------------------
+
 WORKERS = [
     # --- Plumbers ---
-    dict(id=1,  first='Hasnain',   last='Afkar',     email='hasnain.afkar@skillbridge.test',     phone='03001000001', service='plumber',     experience=5,  rating=5.0, bio='Experienced in residential plumbing.',                                              availability=True, price=25,  location='Lahore',     verified=True,  photo='hasnain.jpeg'),
-    dict(id=2,  first='Mehreen',   last='Sajid',     email='mehreen.sajid@skillbridge.test',     phone='03001000002', service='plumber',     experience=6,  rating=4.8, bio='Expert in residential plumbing and advanced leak detection.',                       availability=False, price=30, location='Islamabad',  verified=True,  photo='mehreen.jpeg'),
-    dict(id=3,  first='Shaheer',   last='Khalid',    email='shaheer.khalid@skillbridge.test',    phone='03001000003', service='plumber',     experience=4,  rating=4.5, bio='Dedicated plumber known for quick and efficient emergency services.',               availability=True, price=20,  location='Rawalpindi', verified=False, photo='shaheer.jpeg'),
-    dict(id=4,  first='Ayesha',    last='Hassan',    email='ayesha.hassan@skillbridge.test',     phone='03001000004', service='plumber',     experience=7,  rating=4.7, bio='Renovation and installation expert.',                                               availability=False, price=40, location='Lahore',     verified=True,  photo='ayesha.jpeg'),
-    dict(id=5,  first='Sohaib',    last='Khalid',    email='sohaib.khalid@skillbridge.test',     phone='03001000005', service='plumber',     experience=3,  rating=4.3, bio='Affordable and quick fixes.',                                                       availability=False, price=15, location='Islamabad',  verified=False, photo='sohaib.jpeg'),
-    dict(id=6,  first='Ayza',      last='Khan',      email='ayza.khan@skillbridge.test',         phone='03001000006', service='plumber',     experience=8,  rating=4.7, bio='Commercial plumbing and maintenance.',                                              availability=True, price=45,  location='Karachi',    verified=True,  photo='ayza.jpeg'),
-    dict(id=7,  first='Talal',     last='Amer',      email='talal.amer@skillbridge.test',        phone='03001000007', service='plumber',     experience=5,  rating=5.0, bio='Bathroom and kitchen plumbing.',                                                    availability=False, price=25, location='Lahore',     verified=True,  photo='talal.jpeg'),
-    dict(id=8,  first='Eshaal',    last='Hussain',   email='eshaal.hussain@skillbridge.test',    phone='03001000008', service='plumber',     experience=2,  rating=5.0, bio='Small jobs and maintenance.',                                                       availability=True, price=12,  location='Wah Cantt',  verified=False, photo='eshaal.jpeg'),
+    dict(id=1,  first='Hasnain',   last='Afkar',     email='hasnain.afkar@skillbridge.test',     phone='03001000001', service='plumber',     experience=5,  rating=5.0, bio='Experienced in residential plumbing.',                                              availability=True,  price=1500, location='Lahore',     verified=True,  photo='hasnain.jpeg'),
+    dict(id=2,  first='Mehreen',   last='Sajid',     email='mehreen.sajid@skillbridge.test',     phone='03001000002', service='plumber',     experience=6,  rating=4.8, bio='Expert in residential plumbing and advanced leak detection.',                       availability=False, price=1800, location='Islamabad',  verified=True,  photo='mehreen.jpeg'),
+    dict(id=3,  first='Shaheer',   last='Khalid',    email='shaheer.khalid@skillbridge.test',    phone='03001000003', service='plumber',     experience=4,  rating=4.5, bio='Dedicated plumber known for quick and efficient emergency services.',               availability=True,  price=1000, location='Rawalpindi', verified=False, photo='shaheer.jpeg'),
+    dict(id=4,  first='Ayesha',    last='Hassan',    email='ayesha.hassan@skillbridge.test',     phone='03001000004', service='plumber',     experience=7,  rating=4.7, bio='Renovation and installation expert.',                                               availability=False, price=2200, location='Lahore',     verified=True,  photo='ayesha.jpeg'),
+    dict(id=5,  first='Sohaib',    last='Khalid',    email='sohaib.khalid@skillbridge.test',     phone='03001000005', service='plumber',     experience=3,  rating=4.3, bio='Affordable and quick fixes.',                                                       availability=False, price=800,  location='Islamabad',  verified=False, photo='sohaib.jpeg'),
+    dict(id=6,  first='Ayza',      last='Khan',      email='ayza.khan@skillbridge.test',         phone='03001000006', service='plumber',     experience=8,  rating=4.7, bio='Commercial plumbing and maintenance.',                                              availability=True,  price=2500, location='Karachi',    verified=True,  photo='ayza.jpeg'),
+    dict(id=7,  first='Talal',     last='Amer',      email='talal.amer@skillbridge.test',        phone='03001000007', service='plumber',     experience=5,  rating=5.0, bio='Bathroom and kitchen plumbing.',                                                    availability=False, price=1500, location='Lahore',     verified=True,  photo='talal.jpeg'),
+    dict(id=8,  first='Eshaal',    last='Hussain',   email='eshaal.hussain@skillbridge.test',    phone='03001000008', service='plumber',     experience=2,  rating=5.0, bio='Small jobs and maintenance.',                                                       availability=True,  price=700,  location='Wah Cantt',  verified=False, photo='eshaal.jpeg'),
 
     # --- Electricians ---
-    dict(id=9,  first='Fizza',     last='Ali',       email='fizza.ali@skillbridge.test',         phone='03001000009', service='electrician', experience=7,  rating=4.7, bio='Licensed electrician, fast troubleshooting.',                                       availability=True, price=35,  location='Islamabad',  verified=True,  photo='fizza.jpeg'),
-    dict(id=10, first='Samreen',   last='Sajid',     email='samreen.sajid@skillbridge.test',     phone='03001000010', service='electrician', experience=12, rating=4.9, bio='Specialist in industrial wiring and smart power management.',                       availability=False, price=50, location='Lahore',     verified=True,  photo='samreen.jpeg'),
-    dict(id=11, first='Heba',      last='Raza',      email='heba.raza@skillbridge.test',         phone='03001000011', service='electrician', experience=5,  rating=4.7, bio='Certified electrician for high-voltage systems and panel upgrades.',                availability=False, price=30, location='Karachi',    verified=True,  photo='heba.jpeg'),
-    dict(id=12, first='Abdurrahman', last='Roy',     email='abdurrahman.roy@skillbridge.test',   phone='03001000012', service='electrician', experience=8,  rating=4.7, bio='Panel upgrades and lighting.',                                                      availability=True, price=40,  location='Rawalpindi', verified=True,  photo='maan.jpeg'),
-    dict(id=16, first='Sumreen',   last='Umer Khan', email='sumreen.umer@skillbridge.test',      phone='03001000016', service='electrician', experience=9,  rating=4.7, bio='Specialist in outdoor and security lighting.',                                      availability=False, price=45, location='Rawalpindi', verified=True,  photo='sumer.jpeg'),
-    dict(id=17, first='Summaya',   last='Khalid',    email='summaya.khalid@skillbridge.test',    phone='03001000017', service='electrician', experience=3,  rating=4.3, bio='Quick troubleshooting and repairs.',                                                availability=True, price=18,  location='Islamabad',  verified=False, photo='summaya.jpeg'),
-    dict(id=37, first='Wania',     last='Khalid',    email='wania.khalid@skillbridge.test',      phone='03001000037', service='electrician', experience=4,  rating=5.0, bio='Specialist in residential wiring and smart home devices.',                          availability=True, price=35,  location='Islamabad',  verified=True,  photo='wania.jpeg'),
-    dict(id=40, first='Hoorain',   last='Umar',      email='hoorain.umar@skillbridge.test',      phone='03001000040', service='electrician', experience=4,  rating=4.8, bio='Specialist in solar panel installations and smart home energy management.',        availability=False, price=40, location='Islamabad',  verified=True,  photo='hoorain.jpeg'),
+    dict(id=9,  first='Fizza',     last='Ali',       email='fizza.ali@skillbridge.test',         phone='03001000009', service='electrician', experience=7,  rating=4.7, bio='Licensed electrician, fast troubleshooting.',                                       availability=True,  price=2000, location='Islamabad',  verified=True,  photo='fizza.jpeg'),
+    dict(id=10, first='Samreen',   last='Sajid',     email='samreen.sajid@skillbridge.test',     phone='03001000010', service='electrician', experience=12, rating=4.9, bio='Specialist in industrial wiring and smart power management.',                       availability=False, price=3000, location='Lahore',     verified=True,  photo='samreen.jpeg'),
+    dict(id=11, first='Heba',      last='Raza',      email='heba.raza@skillbridge.test',         phone='03001000011', service='electrician', experience=5,  rating=4.7, bio='Certified electrician for high-voltage systems and panel upgrades.',                availability=False, price=1800, location='Karachi',    verified=True,  photo='heba.jpeg'),
+    dict(id=12, first='Abdurrahman', last='Roy',     email='abdurrahman.roy@skillbridge.test',   phone='03001000012', service='electrician', experience=8,  rating=4.7, bio='Panel upgrades and lighting.',                                                      availability=True,  price=2200, location='Rawalpindi', verified=True,  photo='maan.jpeg'),
+    dict(id=16, first='Sumreen',   last='Umer Khan', email='sumreen.umer@skillbridge.test',      phone='03001000016', service='electrician', experience=9,  rating=4.7, bio='Specialist in outdoor and security lighting.',                                      availability=False, price=2500, location='Rawalpindi', verified=True,  photo='sumer.jpeg'),
+    dict(id=17, first='Summaya',   last='Khalid',    email='summaya.khalid@skillbridge.test',    phone='03001000017', service='electrician', experience=3,  rating=4.3, bio='Quick troubleshooting and repairs.',                                                availability=True,  price=1000, location='Islamabad',  verified=False, photo='summaya.jpeg'),
+    dict(id=37, first='Wania',     last='Khalid',    email='wania.khalid@skillbridge.test',      phone='03001000037', service='electrician', experience=4,  rating=5.0, bio='Specialist in residential wiring and smart home devices.',                          availability=True,  price=1800, location='Islamabad',  verified=True,  photo='wania.jpeg'),
+    dict(id=40, first='Hoorain',   last='Umar',      email='hoorain.umar@skillbridge.test',      phone='03001000040', service='electrician', experience=4,  rating=4.8, bio='Specialist in solar panel installations and smart home energy management.',        availability=False, price=2000, location='Islamabad',  verified=True,  photo='hoorain.jpeg'),
 
     # --- Carpenters ---
-    dict(id=18, first='Areeba',    last='Hassan',    email='areeba.hassan@skillbridge.test',     phone='03001000018', service='carpenter',   experience=4,  rating=4.4, bio='Expert furniture designer with a focus on modern aesthetics.',                      availability=False, price=25, location='Lahore',     verified=True,  photo='areeba.jpeg'),
-    dict(id=26, first='Hasham',    last='Khalid',    email='hasham.khalid@skillbridge.test',     phone='03001000026', service='carpenter',   experience=4,  rating=4.2, bio='Specialist in wood restoration and antique repair.',                               availability=False, price=15, location='Rawalpindi', verified=False, photo='hasham.jpeg'),
-    dict(id=38, first='Hafsa',     last='Tanveer',   email='hafsa.tanveer@skillbridge.test',     phone='03001000038', service='carpenter',   experience=3,  rating=5.0, bio='Custom furniture maker with a keen eye for detail.',                               availability=False, price=30, location='Rawalpindi', verified=True,  photo='hafsa.jpeg'),
-    dict(id=42, first='Hareem',    last='Fatima',    email='hareem.fatima@skillbridge.test',     phone='03001000042', service='carpenter',   experience=5,  rating=4.9, bio='Expert in custom cabinetry, fine woodwork, and luxury interior design.',           availability=True, price=45,  location='Lahore',     verified=True,  photo='hareem.jpeg'),
-    dict(id=44, first='Fatima',    last='Iqbal',     email='fatima.iqbal@skillbridge.test',      phone='03001000044', service='carpenter',   experience=6,  rating=4.8, bio='Master craftsman in wood finishing and bespoke cabinet work.',                     availability=True, price=40,  location='Karachi',    verified=True,  photo='fatima.jpeg'),
-    dict(id=47, first='Sameen',    last='Irshad',    email='sameen.irshad@skillbridge.test',     phone='03001000047', service='carpenter',   experience=4,  rating=4.7, bio='Expert in custom furniture and intricate interior woodwork.',                       availability=True, price=35,  location='Karachi',    verified=True,  photo='sameen.jpeg'),
-    dict(id=48, first='Izza',      last='Musaddir',  email='izza.musaddir@skillbridge.test',     phone='03001000048', service='carpenter',   experience=6,  rating=4.8, bio='Specialist in structural woodwork and handcrafted timber furniture.',              availability=False, price=40, location='Rawalpindi', verified=True,  photo='izza.jpeg'),
+    dict(id=18, first='Areeba',    last='Hassan',    email='areeba.hassan@skillbridge.test',     phone='03001000018', service='carpenter',   experience=4,  rating=4.4, bio='Expert furniture designer with a focus on modern aesthetics.',                      availability=False, price=1400, location='Lahore',     verified=True,  photo='areeba.jpeg'),
+    dict(id=26, first='Hasham',    last='Khalid',    email='hasham.khalid@skillbridge.test',     phone='03001000026', service='carpenter',   experience=4,  rating=4.2, bio='Specialist in wood restoration and antique repair.',                               availability=False, price=900,  location='Rawalpindi', verified=False, photo='hasham.jpeg'),
+    dict(id=38, first='Hafsa',     last='Tanveer',   email='hafsa.tanveer@skillbridge.test',     phone='03001000038', service='carpenter',   experience=3,  rating=5.0, bio='Custom furniture maker with a keen eye for detail.',                               availability=False, price=1600, location='Rawalpindi', verified=True,  photo='hafsa.jpeg'),
+    dict(id=42, first='Hareem',    last='Fatima',    email='hareem.fatima@skillbridge.test',     phone='03001000042', service='carpenter',   experience=5,  rating=4.9, bio='Expert in custom cabinetry, fine woodwork, and luxury interior design.',           availability=True,  price=2500, location='Lahore',     verified=True,  photo='hareem.jpeg'),
+    dict(id=44, first='Fatima',    last='Iqbal',     email='fatima.iqbal@skillbridge.test',      phone='03001000044', service='carpenter',   experience=6,  rating=4.8, bio='Master craftsman in wood finishing and bespoke cabinet work.',                     availability=True,  price=2200, location='Karachi',    verified=True,  photo='fatima.jpeg'),
+    dict(id=47, first='Sameen',    last='Irshad',    email='sameen.irshad@skillbridge.test',     phone='03001000047', service='carpenter',   experience=4,  rating=4.7, bio='Expert in custom furniture and intricate interior woodwork.',                       availability=True,  price=1800, location='Karachi',    verified=True,  photo='sameen.jpeg'),
+    dict(id=48, first='Izza',      last='Musaddir',  email='izza.musaddir@skillbridge.test',     phone='03001000048', service='carpenter',   experience=6,  rating=4.8, bio='Specialist in structural woodwork and handcrafted timber furniture.',              availability=False, price=2000, location='Rawalpindi', verified=True,  photo='izza.jpeg'),
 
     # --- Mechanics ---
-    dict(id=35, first='Maheen',    last='Khalid',    email='maheen.khalid@skillbridge.test',     phone='03001000035', service='mechanic',    experience=6,  rating=4.6, bio='Reliable mechanic with 6 years of experience in engine diagnostics.',             availability=True, price=30,  location='Rawalpindi', verified=True,  photo='maheen.jpeg'),
-    dict(id=39, first='Naveen',    last='Ahmed',     email='naveen.ahmed@skillbridge.test',      phone='03001000039', service='mechanic',    experience=5,  rating=4.7, bio='Expert in luxury car maintenance and performance tuning.',                          availability=True, price=45,  location='Lahore',     verified=True,  photo='naveen.jpeg'),
-    dict(id=41, first='Humayl',    last='Abdullah',  email='humayl.abdullah@skillbridge.test',   phone='03001000041', service='mechanic',    experience=6,  rating=4.6, bio='Experienced in heavy commercial vehicle mechanics and diesel engines.',            availability=True, price=35,  location='Karachi',    verified=True,  photo='humayl.jpeg'),
-    dict(id=43, first='Nawal',     last='Hassan',    email='nawal.hassan@skillbridge.test',      phone='03001000043', service='mechanic',    experience=4,  rating=4.7, bio='Specialist in precision engine tuning and modern vehicle diagnostics.',            availability=False, price=30, location='Islamabad',  verified=True,  photo='nawal.jpeg'),
-    dict(id=45, first='Shawana',   last='Khan',      email='shawana.khan@skillbridge.test',      phone='03001000045', service='mechanic',    experience=5,  rating=4.8, bio='Expert in light vehicle maintenance and advanced brake systems.',                  availability=True, price=30,  location='Lahore',     verified=True,  photo='shawana.jpeg'),
-    dict(id=46, first='Ahmed',     last='Nadeem',    email='ahmed.nadeem@skillbridge.test',      phone='03001000046', service='mechanic',    experience=7,  rating=4.9, bio='Specialist in high-performance engine tuning and track diagnostics.',              availability=False, price=50, location='Islamabad',  verified=True,  photo='ahmed.jpeg'),
-    dict(id=49, first='Hassan',    last='Khalid',    email='hassan.khalid2@skillbridge.test',    phone='03001000049', service='mechanic',    experience=8,  rating=4.7, bio='Seasoned mechanic with a focus on transmission and hybrid engine systems.',        availability=True, price=35,  location='Lahore',     verified=True,  photo='hassan.jpeg'),
-    dict(id=50, first='Anabna',    last='Shah',      email='anabna.shah@skillbridge.test',       phone='03001000050', service='carpenter', experience=5,  rating=4.8,  bio='Skilled carpenter specializing in residential wiring and quick fault diagnosis.', availability=True, price=35, location='Islamabad', verified=True, photo='anabna.jpeg'),
-
+    dict(id=35, first='Maheen',    last='Khalid',    email='maheen.khalid@skillbridge.test',     phone='03001000035', service='mechanic',    experience=6,  rating=4.6, bio='Reliable mechanic with 6 years of experience in engine diagnostics.',             availability=True,  price=1800, location='Rawalpindi', verified=True,  photo='maheen.jpeg'),
+    dict(id=39, first='Naveen',    last='Ahmed',     email='naveen.ahmed@skillbridge.test',      phone='03001000039', service='mechanic',    experience=5,  rating=4.7, bio='Expert in luxury car maintenance and performance tuning.',                          availability=True,  price=2800, location='Lahore',     verified=True,  photo='naveen.jpeg'),
+    dict(id=41, first='Humayl',    last='Abdullah',  email='humayl.abdullah@skillbridge.test',   phone='03001000041', service='mechanic',    experience=6,  rating=4.6, bio='Experienced in heavy commercial vehicle mechanics and diesel engines.',            availability=True,  price=2200, location='Karachi',    verified=True,  photo='humayl.jpeg'),
+    dict(id=43, first='Nawal',     last='Hassan',    email='nawal.hassan@skillbridge.test',      phone='03001000043', service='mechanic',    experience=4,  rating=4.7, bio='Specialist in precision engine tuning and modern vehicle diagnostics.',            availability=False, price=1800, location='Islamabad',  verified=True,  photo='nawal.jpeg'),
+    dict(id=45, first='Shawana',   last='Khan',      email='shawana.khan@skillbridge.test',      phone='03001000045', service='mechanic',    experience=5,  rating=4.8, bio='Expert in light vehicle maintenance and advanced brake systems.',                  availability=True,  price=1800, location='Lahore',     verified=True,  photo='shawana.jpeg'),
+    dict(id=46, first='Ahmed',     last='Nadeem',    email='ahmed.nadeem@skillbridge.test',      phone='03001000046', service='mechanic',    experience=7,  rating=4.9, bio='Specialist in high-performance engine tuning and track diagnostics.',              availability=False, price=3500, location='Islamabad',  verified=True,  photo='ahmed.jpeg'),
+    dict(id=49, first='Hassan',    last='Khalid',    email='hassan.khalid2@skillbridge.test',    phone='03001000049', service='mechanic',    experience=8,  rating=4.7, bio='Seasoned mechanic with a focus on transmission and hybrid engine systems.',        availability=True,  price=2500, location='Lahore',     verified=True,  photo='hassan.jpeg'),
+    dict(id=50, first='Anabna',    last='Shah',      email='anabna.shah@skillbridge.test',       phone='03001000050', service='carpenter',   experience=5,  rating=4.8, bio='Skilled carpenter specializing in residential wiring and quick fault diagnosis.',  availability=True,  price=2000, location='Islamabad',  verified=True,  photo='anabna.jpeg'),
 ]
 
 # Map data.js service strings to Django's ServiceCategory choices
@@ -123,8 +134,36 @@ class Command(BaseCommand):
             action='store_true',
             help='Delete all previously seeded dummy workers before re-seeding.',
         )
+        parser.add_argument(
+            '--update-prices',
+            action='store_true',
+            help='Update base_hourly_rate for existing workers without deleting anything.',
+        )
 
     def handle(self, *args, **options):
+        # ------------------------------------------------------------------
+        # --update-prices: only patch base_hourly_rate, touch nothing else
+        # ------------------------------------------------------------------
+        if options['update_prices']:
+            updated = 0
+            for w in WORKERS:
+                try:
+                    user = User.objects.get(email=w['email'])
+                    profile = WorkerProfile.objects.get(user=user)
+                    profile.base_hourly_rate = w['price']
+                    profile.save(update_fields=['base_hourly_rate'])
+                    self.stdout.write(self.style.SUCCESS(
+                        f"  UPDATED  {user.first_name} {user.last_name} → Rs. {w['price']}/hr"
+                    ))
+                    updated += 1
+                except User.DoesNotExist:
+                    self.stdout.write(f"  SKIP  {w['email']} (user not found)")
+                except WorkerProfile.DoesNotExist:
+                    self.stdout.write(f"  SKIP  {w['email']} (worker profile not found)")
+            self.stdout.write('')
+            self.stdout.write(self.style.SUCCESS(f'Done. {updated} worker(s) price-updated.'))
+            return
+
         # ------------------------------------------------------------------
         # Optional: wipe previously seeded accounts
         # We identify them by the @skillbridge.test email domain
@@ -220,7 +259,7 @@ class Command(BaseCommand):
             )
 
             self.stdout.write(self.style.SUCCESS(
-                f'  OK    {user.full_name} ({w["service"]}, {w["location"]})'
+                f'  OK    {user.full_name} ({w["service"]}, {w["location"]}) — Rs. {w["price"]}/hr'
             ))
             created_count += 1
 

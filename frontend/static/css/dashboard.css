@@ -182,3 +182,193 @@
 [data-theme='light'] .table tr:hover {
   background: rgba(0, 0, 0, 0.01);
 }
+
+/* =========================================================================
+   ADD THIS TO THE BOTTOM OF dashboard.css
+   Job filter tabs + status colors — consistent everywhere
+   ========================================================================= */
+
+/* ── Filter Tab Base ── */
+.filter-tab {
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+/* ── All ── */
+.filter-tab[data-filter="all"] {
+  border-color: var(--border);
+  color: var(--muted);
+}
+.filter-tab[data-filter="all"]:hover,
+.filter-tab[data-filter="all"].active {
+  background: #6c8a3d;
+  border-color: #6c8a3d;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(108,138,61,0.35);
+  transform: translateY(-2px);
+}
+
+/* ── Accepted — Sky Blue ── */
+.filter-tab[data-filter="accepted"] {
+  border-color: var(--border);
+  color: var(--muted);
+}
+.filter-tab[data-filter="accepted"]:hover,
+.filter-tab[data-filter="accepted"].active {
+  background: #38bdf8;
+  border-color: #38bdf8;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(56,189,248,0.35);
+  transform: translateY(-2px);
+}
+
+/* ── In Progress — Warm Orange ── */
+.filter-tab[data-filter="in_progress"] {
+  border-color: var(--border);
+  color: var(--muted);
+}
+.filter-tab[data-filter="in_progress"]:hover,
+.filter-tab[data-filter="in_progress"].active {
+  background: #fb923c;
+  border-color: #fb923c;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(251,146,60,0.35);
+  transform: translateY(-2px);
+}
+
+/* ── Completed — Emerald Green ── */
+.filter-tab[data-filter="completed"] {
+  border-color: var(--border);
+  color: var(--muted);
+}
+.filter-tab[data-filter="completed"]:hover,
+.filter-tab[data-filter="completed"].active {
+  background: #34d399;
+  border-color: #34d399;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(52,211,153,0.35);
+  transform: translateY(-2px);
+}
+
+/* ── Cancelled — Red ── */
+.filter-tab[data-filter="cancelled"] {
+  border-color: var(--border);
+  color: var(--muted);
+}
+.filter-tab[data-filter="cancelled"]:hover,
+.filter-tab[data-filter="cancelled"].active {
+  background: #f87171;
+  border-color: #f87171;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(248,113,113,0.35);
+  transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════════
+   STATUS BADGE — consistent colors for table rows
+   ═══════════════════════════════════════════════ */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.status-badge.pending     { background: rgba(108,138,61,0.12); color: #6c8a3d;  }
+.status-badge.accepted    { background: rgba(56,189,248,0.15); color: #0284c7;  }
+.status-badge.in_progress { background: rgba(251,146,60,0.15); color: #ea580c;  }
+.status-badge.completed   { background: rgba(52,211,153,0.15); color: #059669;  }
+.status-badge.cancelled   { background: rgba(248,113,113,0.15); color: #dc2626; }
+
+/* ═══════════════════════════════════════════════
+   ACTION BUTTONS — matching same palette
+   ═══════════════════════════════════════════════ */
+
+/* Start Job — sky blue */
+.btn-start {
+  background: #38bdf8 !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  transition: filter 0.2s, transform 0.2s !important;
+}
+.btn-start:hover {
+  filter: brightness(1.08) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(56,189,248,0.4) !important;
+}
+
+/* Mark Complete — emerald */
+.btn-complete {
+  background: #34d399 !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  transition: filter 0.2s, transform 0.2s !important;
+}
+.btn-complete:hover {
+  filter: brightness(1.08) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(52,211,153,0.4) !important;
+}
+
+/* Accept — brand green */
+.btn-accept {
+  background: #6c8a3d !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  transition: filter 0.2s, transform 0.2s !important;
+}
+.btn-accept:hover {
+  filter: brightness(1.1) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(108,138,61,0.4) !important;
+}
+
+/* Decline — red outline */
+.btn-decline {
+  background: transparent !important;
+  border: 2px solid #f87171 !important;
+  color: #f87171 !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  transition: all 0.2s !important;
+}
+.btn-decline:hover {
+  background: rgba(248,113,113,0.1) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   GROUP HEADER COLORS — matches filter tabs
+   ═══════════════════════════════════════════════ */
+
+.job-group-accepted    { color: #0284c7  !important; }
+.job-group-in_progress { color: #ea580c  !important; }
+.job-group-completed   { color: #059669  !important; }
+.job-group-cancelled   { color: #dc2626  !important; }
+.job-group-pending     { color: #6c8a3d  !important; }
+
+/* Badge inside group header */
+.job-group-badge-accepted    { background: rgba(56,189,248,0.15);  color: #6dbce3;  }
+.job-group-badge-in_progress { background: rgba(251,146,60,0.15);  color: #e7e276;  }
+.job-group-badge-completed   { background: rgba(52,211,153,0.15);  color: #6be47f;  }
+.job-group-badge-cancelled   { background: rgba(248,113,113,0.15); color: #dc2626;  }
+.job-group-badge-pending     { background: rgba(108,138,61,0.12);  color: #e3b853;  }

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SkillBridge — Update Profile</title>
+  <link rel="stylesheet" href="../static/css/style.css">
+  <link rel="stylesheet" href="../static/css/home.css">
+  <link rel="stylesheet" href="../static/css/dashboard.css">
+  <script src="../static/js/theme.js"></script>
+  <script>
+    if (localStorage.getItem('user_role') !== 'worker') location.replace('index.html');
+    history.replaceState(null, '', 'update-profile.html' + location.hash);
+  </script>
+</head>
+<body>
+  <div class="mobile-overlay" id="mobile-overlay"></div>
+  <header class="top-navbar">
+    <div style="display:flex;align-items:center;gap:24px">
+      <a href="worker-dashboard.html" class="navbar-brand">
+        <div class="logo-mark">SB</div>SkillBridge
+      </a>
+      <nav class="navbar-links">
+        <a class="nav-item" href="worker-dashboard.html">← Back to Dashboard</a>
+      </nav>
+    </div>
+    <div class="navbar-actions">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+        <svg id="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg id="sun-icon" style="display:none" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+      </button>
+      <div class="profile-dropdown-container">
+        <div class="profile-trigger" id="profile-trigger">
+          <img id="nav-avatar" src="../static/images/default-avatar.png" class="user-avatar" alt="Avatar"
+            onerror="this.style.display='none';document.getElementById('nav-initials').style.display='flex'">
+          <div id="nav-initials" class="user-avatar" style="display:none;background:var(--primary);color:#fff;font-weight:700;font-size:14px;align-items:center;justify-content:center">W</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main style="max-width:900px;width:100%;margin:32px auto 64px;padding:0 4%;min-height:100vh">
+    <div id="update-profile-container">
+      <div style="text-align:center;padding:60px;color:var(--muted)">
+        <div style="font-size:32px;margin-bottom:12px">⏳</div>Loading your profile...
+      </div>
+    </div>
+  </main>
+
+  <div id="up-toast" style="display:none;position:fixed;bottom:24px;right:24px;padding:14px 20px;
+    border-radius:12px;font-size:14px;font-weight:600;z-index:9999;
+    box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:opacity 0.3s"></div>
+
+  <script src="../static/js/config.js"></script>
+  <script src="../static/js/api.js"></script>
+  <script src="../static/js/data.js"></script>
+  <script src="../static/js/update-profile.js"></script>
+  <script src="../static/js/session.js"></script>
+  <script src="../static/js/footer.js"></script>
+</body>
+</html>

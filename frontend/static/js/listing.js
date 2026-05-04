@@ -37,7 +37,7 @@ function listCardHTML(w) {
           ${w.service} Specialist • ${w.experience} years experience
         </div>
         <div style="color:var(--muted);font-size:13px;margin-bottom:8px;">
-          📍 ${w.location || 'Local Region'} • 💰 Rs${w.price || 25}/hr
+          📍 ${w.location || 'Local Region'} • 💰 Rs. ${w.price || 1500}/hr
         </div>
         <p style="margin:0;font-size:14px;color:var(--muted);line-height:1.5;">
           ${w.bio || ''}
@@ -67,7 +67,7 @@ function renderList() {
 
   // --- Read all filter values from DOM ---
   const selectedCat      = document.querySelector('input[name="filter-category"]:checked')?.value || 'All';
-  const maxPrice         = parseInt(document.getElementById('filter-price')?.value || 100, 10);
+  const maxPrice         = parseInt(document.getElementById('filter-price')?.value || 3500, 10);
   const selectedAvail    = document.getElementById('filter-availability')?.value || 'All';
   const minRating        = parseFloat(document.getElementById('filter-rating')?.value || 0);
   const selectedExp      = document.getElementById('filter-experience')?.value || 'All';
@@ -77,7 +77,7 @@ function renderList() {
 
   // Update price display
   const priceDisplay = document.getElementById('price-display');
-  if (priceDisplay) priceDisplay.textContent = maxPrice;
+  if (priceDisplay) priceDisplay.textContent = `Rs. ${maxPrice.toLocaleString()}`;
 
   // --- Filter pipeline ---
   let filtered = SKILLBRIDGE_DATA.workers.filter(w => {
@@ -142,6 +142,14 @@ function setupFilters() {
   const sortSelect      = document.getElementById('filter-sort');
   const clearBtn        = document.getElementById('clear-filters');
 
+  // Set slider range to match PKR prices (700 – 3500)
+  if (priceInput) {
+    priceInput.min   = 700;
+    priceInput.max   = 3500;
+    priceInput.step  = 100;
+    priceInput.value = 3500;
+  }
+
   // Attach listeners to all filter inputs
   catRadios.forEach(r  => r.addEventListener('change', renderList));
   availSelect?.addEventListener('change', renderList);
@@ -156,7 +164,7 @@ function setupFilters() {
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
       document.querySelector('input[name="filter-category"][value="All"]').checked = true;
-      if (priceInput)    { priceInput.value    = 100; }
+      if (priceInput)    { priceInput.value    = 3500; }
       if (availSelect)   { availSelect.value   = 'All'; }
       if (ratingSelect)  { ratingSelect.value  = '0'; }
       if (expSelect)     { expSelect.value     = 'All'; }

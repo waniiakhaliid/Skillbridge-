@@ -6,7 +6,7 @@ FILE LOCATION: skillbridge/bookings/serializers.py
 
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Booking, BookingPhoto, Review, BookingStatus
+from .models import Booking, BookingPhoto, Review, BookingStatus, Dispute
 
 
 class BookingPhotoSerializer(serializers.ModelSerializer):
@@ -213,3 +213,44 @@ class BookingStatusUpdateSerializer(serializers.ModelSerializer):
             )
 
         return new_status
+
+
+# =======================================================================
+# PHASE-2 SERIALIZERS — appended below, existing serializers untouched
+# =======================================================================
+
+
+class DisputeSerializer(serializers.ModelSerializer):
+    """
+    Used for both creating a new Dispute and reading existing ones.
+    raised_by and resolved_by are read-only — set by the view from
+    request.user so users cannot impersonate each other.
+    resolution and resolved_by are null until an admin closes the dispute.
+    """
+
+    # Denormalise human-readable names so the admin UI needs fewer requests
+    raised_by_name  = serializers.CharField(
+        source='raised_by.full_name', read_only=True
+    )
+    resolved_by_name = serializers.CharField(
+        source='resolved_by.full_name', read_only=True, default=None
+    )
+
+    class Meta:
+        model  = Dispute
+        fields = [
+            'id', 'booking',
+            'raised_by', 'raised_by_name',
+            'reason', 'status',
+            'resolution',
+            'resolved_by', 'resolved_by_name',
+            'created_at', 'resolved_at',
+        ]
+        read_only_fields = [
+            'id', 'raised_by', 'raised_by_name',
+            'resolved_by', 'resolved_by_name',
+            'created_at', 'resolved_at',
+            # status and resolution are admin-only write fields,
+            # set via AdminDisputeUpdateView — not writable by the creator
+            'status', 'resolution',
+        ]
