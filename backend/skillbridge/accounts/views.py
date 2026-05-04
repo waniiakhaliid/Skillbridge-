@@ -7,6 +7,7 @@ FILE LOCATION: skillbridge/accounts/views.py
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes
 
 # ── SimpleJWT imports ──
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -15,15 +16,16 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 # ── Django imports ──
 from django.contrib.auth import get_user_model
+from django.db.models import Max
 
 # ── Local imports ──
-from .utils import save_file_locally
 from .models import WorkerProfile, CustomerProfile
 from .serializers import (
     CustomerRegisterSerializer,
     WorkerRegisterSerializer,
     WorkerDocumentSerializer,
     WorkerProfileSerializer,
+    WorkerDetailSerializer,
     WorkerServiceSerializer,
     CustomerProfileSerializer,
     UserSerializer,
@@ -33,73 +35,6 @@ from .serializers import (
 User = get_user_model()
 
 
-
-# # -------------------------------------------------------
-# # WORKER LISTING VIEWS (used by frontend data.js)
-# # -------------------------------------------------------
-
-# class WorkerListView(generics.ListAPIView):
-#     """
-#     GET /api/accounts/workers/
-#     GET /api/accounts/workers/?category=plumber
-
-#     Returns all approved, active workers formatted for
-#     the frontend listing/home page cards.
-
-#     Uses WorkerCardSerializer which flattens the data into
-#     the same shape as the old hardcoded SKILLBRIDGE_DATA.workers.
-
-#     Public endpoint — no login required.
-#     """
-#     serializer_class   = WorkerCardSerializer   # ← CHANGED from WorkerProfileSerializer
-#     permission_classes = [permissions.AllowAny]
-
-#     def get_queryset(self):
-#         queryset = WorkerProfile.objects.filter(
-#             verification_status='approved',
-#             user__account_status='active'
-#         ).select_related(
-#             'user'          # JOIN User table — needed for name, photo
-#         ).prefetch_related(
-#             'services'      # JOIN WorkerService — needed for category
-#         )
-
-#         # Optional filter by category: ?category=plumber
-#         category = self.request.query_params.get('category')
-#         if category:
-#             queryset = queryset.filter(services__category=category.lower())
-
-#         return queryset
-
-#     def list(self, request, *args, **kwargs):
-#         """
-#         Override list() to wrap response in { workers: [...] }
-#         so frontend can do: data.workers.forEach(...)
-#         """
-#         queryset    = self.get_queryset()
-#         serializer  = self.get_serializer(queryset, many=True)
-#         return Response({'workers': serializer.data})
-
-
-# class WorkerDetailView(generics.RetrieveAPIView):
-#     """
-#     GET /api/accounts/workers/<uuid:pk>/
-
-#     Returns a single worker's card data by their WorkerProfile UUID.
-#     Used by profile.html?worker=<id>
-
-#     Public endpoint — no login required.
-#     """
-#     serializer_class   = WorkerCardSerializer   # ← CHANGED from WorkerProfileSerializer
-#     permission_classes = [permissions.AllowAny]
-#     queryset           = WorkerProfile.objects.filter(
-#         verification_status='approved'
-#     ).select_related(
-#         'user'
-#     ).prefetch_related(
-#         'services'
-#     )
-
 # -------------------------------------------------------
 # REGISTRATION VIEWS
 # -------------------------------------------------------
@@ -107,9 +42,6 @@ User = get_user_model()
 class CustomerRegisterView(generics.CreateAPIView):
     """
     POST /api/accounts/register/customer/
-    Body: { first_name, last_name, email, phone, password }
-    Creates a User (role=customer) + CustomerProfile.
-    Public endpoint — no login required.
     """
     serializer_class   = CustomerRegisterSerializer
     permission_classes = [permissions.AllowAny]
@@ -118,12 +50,8 @@ class CustomerRegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-
         return Response(
-            {
-                'message': 'Customer account created successfully.',
-                'user':    UserSerializer(user).data
-            },
+            {'message': 'Customer account created successfully.', 'user': UserSerializer(user).data},
             status=status.HTTP_201_CREATED
         )
 
@@ -131,12 +59,6 @@ class CustomerRegisterView(generics.CreateAPIView):
 class WorkerRegisterView(generics.CreateAPIView):
     """
     POST /api/accounts/register/worker/
-    Body: { first_name, last_name, email, phone, password,
-            bio, years_experience, base_hourly_rate,
-            service_radius_km, city, categories }
-    Creates User (role=worker) + WorkerProfile + WorkerService rows.
-    Returns JWT token so frontend can authenticate Step 3 document upload.
-    Public endpoint — no login required.
     """
     serializer_class   = WorkerRegisterSerializer
     permission_classes = [permissions.AllowAny]
@@ -144,18 +66,14 @@ class WorkerRegisterView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-
-        # Generate JWT token pair for the newly created worker
-        # Frontend stores the access token and sends it with Step 3
+        user    = serializer.save()
         refresh = RefreshToken.for_user(user)
-
         return Response(
             {
                 'message' : 'Worker account created. Pending admin verification.',
                 'token'   : str(refresh.access_token),
                 'refresh' : str(refresh),
-                'user'    : UserSerializer(user).data
+                'user'    : UserSerializer(user).data,
             },
             status=status.HTTP_201_CREATED
         )
@@ -165,34 +83,40 @@ class WorkerDocumentUploadView(APIView):
     """
     PATCH /api/accounts/worker/documents/
     Body: multipart/form-data { cnic_front, cnic_back, profile_photo }
-    Saves files to local media/ folder, stores URL strings in TextFields.
-    Requires JWT token from WorkerRegisterView in Authorization header.
+
+    Now uses ImageField — Django handles file saving and path organization.
+    Files land at:
+      media/workers/{user_id}/profile/profile.{ext}
+      media/workers/{user_id}/documents/cnic_front.{ext}
+      media/workers/{user_id}/documents/cnic_back.{ext}
     """
     permission_classes     = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def patch(self, request):
-        serializer = WorkerDocumentSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         user    = request.user
         profile = user.worker_profile
 
+        # ── CNIC front ──
         if 'cnic_front' in request.FILES:
-            profile.cnic_front_url = save_file_locally(request.FILES['cnic_front'], 'cnics')
+            profile.cnic_front = request.FILES['cnic_front']  # ImageField saves automatically
 
+        # ── CNIC back ──
         if 'cnic_back' in request.FILES:
-            profile.cnic_back_url = save_file_locally(request.FILES['cnic_back'], 'cnics')
+            profile.cnic_back = request.FILES['cnic_back']
 
-        # Profile photo lives on User not WorkerProfile so save separately
+        # ── Profile photo — lives on User model ──
         if 'profile_photo' in request.FILES:
-            user.profile_photo_url = save_file_locally(request.FILES['profile_photo'], 'profiles')
-            user.save()
+            user.profile_photo = request.FILES['profile_photo']
+            user.save(update_fields=['profile_photo'])
 
         profile.save()
 
         return Response(
-            {'message': 'Documents uploaded. Pending admin verification.'},
+            {
+                'message':           'Documents uploaded successfully.',
+                'profile_photo_url': user.profile_photo_url,
+            },
             status=status.HTTP_200_OK
         )
 
@@ -202,24 +126,18 @@ class WorkerDocumentUploadView(APIView):
 # -------------------------------------------------------
 
 class MeView(APIView):
-    """
-    GET /api/accounts/me/
-    Returns the logged-in user's info + their profile.
-    Requires a valid JWT token in the Authorization header.
-    """
+    """GET /api/accounts/me/"""
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         user = request.user
         data = UserSerializer(user).data
 
-        # Attach the relevant profile based on role
         if user.is_worker:
             try:
                 data['profile'] = WorkerProfileSerializer(user.worker_profile).data
             except WorkerProfile.DoesNotExist:
                 data['profile'] = None
-
         elif user.is_customer:
             try:
                 data['profile'] = CustomerProfileSerializer(user.customer_profile).data
@@ -233,15 +151,8 @@ class MeView(APIView):
 # WORKER VIEWS
 # -------------------------------------------------------
 
-
-
 class WorkerListView(generics.ListAPIView):
-    """
-    GET /api/accounts/workers/
-    GET /api/accounts/workers/?category=plumber
-    Lists all approved, active workers.
-    Public endpoint — anyone can browse workers.
-    """
+    """GET /api/accounts/workers/"""
     serializer_class   = WorkerProfileSerializer
     permission_classes = [permissions.AllowAny]
 
@@ -259,16 +170,12 @@ class WorkerListView(generics.ListAPIView):
 
 
 class WorkerDetailView(generics.RetrieveAPIView):
-    """
-    GET /api/accounts/workers/<uuid:pk>/
-    Returns the full profile of a single approved worker.
-    Public endpoint.
-    """
-    serializer_class   = WorkerProfileSerializer
+    """GET /api/accounts/workers/<uuid:pk>/"""
+    serializer_class   = WorkerDetailSerializer
     permission_classes = [permissions.AllowAny]
     queryset           = WorkerProfile.objects.filter(
         verification_status='approved'
-    ).select_related('user').prefetch_related('services')
+    ).select_related('user').prefetch_related('services', 'portfolio_photos', 'availability')
 
 
 # -------------------------------------------------------
@@ -276,6 +183,7 @@ class WorkerDetailView(generics.RetrieveAPIView):
 # -------------------------------------------------------
 
 class WorkerProfileUpdateView(generics.UpdateAPIView):
+    """PATCH /api/accounts/worker/profile/"""
     serializer_class   = WorkerProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
     http_method_names  = ['patch']
@@ -284,20 +192,16 @@ class WorkerProfileUpdateView(generics.UpdateAPIView):
         return self.request.user.worker_profile
 
     def partial_update(self, request, *args, **kwargs):
-        # Handle profile photo file upload
+        # Handle profile photo upload — ImageField handles path and saving
         if 'profile_photo' in request.FILES:
-            url = save_file_locally(request.FILES['profile_photo'], 'profile_photos')
-            request.user.profile_photo_url = url
-            request.user.save()
+            request.user.profile_photo = request.FILES['profile_photo']
+            request.user.save(update_fields=['profile_photo'])
 
         return super().partial_update(request, *args, **kwargs)
 
 
 class CustomerProfileUpdateView(generics.UpdateAPIView):
-    """
-    PATCH /api/accounts/customer/profile/
-    Logged-in customer updates their own profile.
-    """
+    """PATCH /api/accounts/customer/profile/"""
     serializer_class   = CustomerProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
     http_method_names  = ['patch']
@@ -311,39 +215,23 @@ class CustomerProfileUpdateView(generics.UpdateAPIView):
 # -------------------------------------------------------
 
 class LogoutView(APIView):
-    """
-    POST /api/auth/logout/
-    Body: { "refresh": "your_refresh_token_here" }
-    Blacklists the refresh token so it can't generate new access tokens.
-    """
+    """POST /api/auth/logout/"""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         refresh_token = request.data.get('refresh')
-
         if not refresh_token:
-            return Response(
-                {'error': 'Refresh token is required.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
+            return Response({'error': 'Refresh token is required.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response(
-                {'message': 'Logged out successfully.'},
-                status=status.HTTP_200_OK
-            )
-
+            return Response({'message': 'Logged out successfully.'}, status=status.HTTP_200_OK)
         except TokenError:
-            return Response(
-                {'error': 'Invalid or already expired token.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'Invalid or already expired token.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # =======================================================================
-# PHASE-2 VIEWS — appended below, existing views above are untouched
+# PHASE-2 VIEWS
 # =======================================================================
 
 from .permissions import IsWorker, IsCustomer, IsAdminRole
@@ -361,11 +249,8 @@ from .serializers import (
     FavoriteSerializer,
     WorkerServiceSerializer,
 )
-# ReviewSerializer lives in the bookings app — imported lazily inside the view
-# to avoid a circular import (bookings imports accounts, not the other way round)
 from django.db.models import Sum
 from django.utils import timezone
-from datetime import datetime
 
 
 # -------------------------------------------------------
@@ -373,33 +258,21 @@ from datetime import datetime
 # -------------------------------------------------------
 
 class RegisterView(generics.CreateAPIView):
-    """
-    POST /api/accounts/register/
-    Unified endpoint that creates customer or worker based on the
-    'role' field in the request body.
-    Replaces the older customer-specific and worker-specific routes
-    and is the canonical registration endpoint going forward.
-    """
+    """POST /api/accounts/register/"""
     serializer_class   = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-
-        # Return a token pair immediately so the client is logged in right away
+        user    = serializer.save()
         refresh = RefreshToken.for_user(user)
         return Response(
             {
                 'message': 'Account created successfully.',
                 'access':  str(refresh.access_token),
                 'refresh': str(refresh),
-                'user': {
-                    'id':    str(user.id),
-                    'email': user.email,
-                    'role':  user.role,
-                }
+                'user': {'id': str(user.id), 'email': user.email, 'role': user.role},
             },
             status=status.HTTP_201_CREATED
         )
@@ -410,37 +283,22 @@ class RegisterView(generics.CreateAPIView):
 # -------------------------------------------------------
 
 class ChangePasswordView(APIView):
-    """
-    POST /api/accounts/me/change-password/
-    Body: { "old_password": "...", "new_password": "..." }
-    Validates the current password before setting the new one so that
-    a stolen access token alone cannot change the password.
-    """
+    """POST /api/accounts/me/change-password/"""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        user        = request.user
-        old_password = request.data.get('old_password', '')
+        user         = request.user
+        old_password = request.data.get('old_password', '') or request.data.get('current_password', '')
         new_password = request.data.get('new_password', '')
 
         if not old_password or not new_password:
-            return Response(
-                {'error': 'Both old_password and new_password are required.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'Both old_password and new_password are required.'}, status=400)
 
-        # check_password hashes and compares — never compare plain text directly
         if not user.check_password(old_password):
-            return Response(
-                {'error': 'Incorrect current password.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'Incorrect current password.'}, status=400)
 
         if len(new_password) < 6:
-            return Response(
-                {'error': 'New password must be at least 6 characters.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'New password must be at least 6 characters.'}, status=400)
 
         user.set_password(new_password)
         user.save()
@@ -452,37 +310,24 @@ class ChangePasswordView(APIView):
 # -------------------------------------------------------
 
 class WorkerAvailabilityView(generics.ListCreateAPIView):
-    """
-    GET  /api/accounts/workers/me/availability/ — list own slots
-    POST /api/accounts/workers/me/availability/ — add a slot
-    """
     serializer_class   = WorkerAvailabilitySerializer
     permission_classes = [IsWorker]
 
     def get_queryset(self):
-        return WorkerAvailability.objects.filter(
-            worker_profile=self.request.user.worker_profile
-        )
+        return WorkerAvailability.objects.filter(worker_profile=self.request.user.worker_profile)
 
     def perform_create(self, serializer):
-        # Automatically attach the authenticated worker's profile — prevents
-        # a worker from creating availability for a different worker
         serializer.save(worker_profile=self.request.user.worker_profile)
 
 
 class WorkerAvailabilityDeleteView(generics.DestroyAPIView):
-    """DELETE /api/accounts/workers/me/availability/<uuid:pk>/"""
     permission_classes = [IsWorker]
 
     def get_queryset(self):
-        # Scope to own profile so a worker cannot delete another worker's slot
-        return WorkerAvailability.objects.filter(
-            worker_profile=self.request.user.worker_profile
-        )
+        return WorkerAvailability.objects.filter(worker_profile=self.request.user.worker_profile)
 
 
 class WorkerServiceView(generics.CreateAPIView):
-    """POST /api/accounts/workers/me/services/ — add a service category"""
     serializer_class   = WorkerServiceSerializer
     permission_classes = [IsWorker]
 
@@ -491,17 +336,13 @@ class WorkerServiceView(generics.CreateAPIView):
 
 
 class WorkerServiceDeleteView(generics.DestroyAPIView):
-    """DELETE /api/accounts/workers/me/services/<uuid:pk>/"""
     permission_classes = [IsWorker]
 
     def get_queryset(self):
-        return WorkerService.objects.filter(
-            worker_profile=self.request.user.worker_profile
-        )
+        return WorkerService.objects.filter(worker_profile=self.request.user.worker_profile)
 
 
 class WorkerToolView(generics.CreateAPIView):
-    """POST /api/accounts/workers/me/tools/ — add a tool"""
     serializer_class   = WorkerToolSerializer
     permission_classes = [IsWorker]
 
@@ -510,43 +351,59 @@ class WorkerToolView(generics.CreateAPIView):
 
 
 class WorkerToolDeleteView(generics.DestroyAPIView):
-    """DELETE /api/accounts/workers/me/tools/<uuid:pk>/"""
     permission_classes = [IsWorker]
 
     def get_queryset(self):
-        return WorkerTool.objects.filter(
-            worker_profile=self.request.user.worker_profile
-        )
+        return WorkerTool.objects.filter(worker_profile=self.request.user.worker_profile)
 
+
+# -------------------------------------------------------
+# PORTFOLIO VIEWS
+# -------------------------------------------------------
 
 class WorkerPortfolioView(generics.ListCreateAPIView):
+    """
+    GET  /api/accounts/workers/me/portfolio/  — list own photos (ordered)
+    POST /api/accounts/workers/me/portfolio/  — upload a new photo
+
+    Files saved to: media/workers/{user_id}/portfolio/{uuid12}.{ext}
+    Django ImageField handles the actual file saving — no manual path logic needed.
+    """
     serializer_class   = WorkerPortfolioPhotoSerializer
     permission_classes = [IsWorker]
 
     def get_queryset(self):
+        # Returns photos in display order (order field, then upload date)
         return WorkerPortfolioPhoto.objects.filter(
             worker_profile=self.request.user.worker_profile
-        ).order_by('-uploaded_at')
+        ).order_by('order', 'uploaded_at')
 
     def create(self, request, *args, **kwargs):
         if 'photo' not in request.FILES:
-            return Response(
-                {'error': 'photo file is required.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        # Save file locally and get URL string
-        photo_url = save_file_locally(request.FILES['photo'], 'portfolio')
-        caption   = request.data.get('caption', '')
+            return Response({'error': 'photo file is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        profile = request.user.worker_profile
+
+        # Put new photo at the end of the list
+        max_order = WorkerPortfolioPhoto.objects.filter(
+            worker_profile=profile
+        ).aggregate(Max('order'))['order__max']
+        next_order = (max_order or 0) + 1
+
+        # ImageField (upload_to=portfolio_photo_path) handles saving the file
+        # to media/workers/{user_id}/portfolio/{uuid12}.{ext} automatically
         photo = WorkerPortfolioPhoto.objects.create(
-            worker_profile=request.user.worker_profile,
-            photo_url=photo_url,
-            caption=caption,
+            worker_profile = profile,
+            photo          = request.FILES['photo'],
+            caption        = request.data.get('caption', ''),
+            order          = next_order,
         )
+
         return Response(
             WorkerPortfolioPhotoSerializer(photo).data,
             status=status.HTTP_201_CREATED
         )
+
 
 class WorkerPortfolioDeleteView(generics.DestroyAPIView):
     """DELETE /api/accounts/workers/me/portfolio/<uuid:pk>/"""
@@ -558,16 +415,49 @@ class WorkerPortfolioDeleteView(generics.DestroyAPIView):
         )
 
 
+class WorkerPortfolioReorderView(APIView):
+    """
+    POST /api/accounts/workers/me/portfolio/reorder/
+    Body: { "order": ["uuid1", "uuid2", "uuid3"] }
+
+    Saves the drag-and-drop order from the frontend.
+    First ID in the list becomes order=0 (the cover photo).
+    """
+    permission_classes = [IsWorker]
+
+    def post(self, request):
+        order = request.data.get('order', [])
+        if not isinstance(order, list) or not order:
+            return Response({'detail': 'order list required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            profile = request.user.worker_profile
+        except Exception:
+            return Response({'detail': 'Worker profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        photos    = WorkerPortfolioPhoto.objects.filter(worker_profile=profile)
+        photo_map = {str(p.id): p for p in photos}
+
+        updated = []
+        for index, photo_id in enumerate(order):
+            if photo_id in photo_map:
+                photo_map[photo_id].order = index
+                updated.append(photo_map[photo_id])
+
+        # Bulk update is much faster than individual saves
+        WorkerPortfolioPhoto.objects.bulk_update(updated, ['order'])
+
+        return Response({
+            'detail': 'Order saved successfully.',
+            'count':  len(updated),
+        })
+
+
 # -------------------------------------------------------
 # FAVOURITES
 # -------------------------------------------------------
 
 class FavoriteListCreateView(generics.ListCreateAPIView):
-    """
-    GET  /api/accounts/favorites/ — list own favourites
-    POST /api/accounts/favorites/ — add a worker to favourites
-    Body: { "worker_profile": "<uuid>" }
-    """
     serializer_class   = FavoriteSerializer
     permission_classes = [IsCustomer]
 
@@ -577,18 +467,14 @@ class FavoriteListCreateView(generics.ListCreateAPIView):
         ).select_related('worker_profile__user')
 
     def perform_create(self, serializer):
-        # customer is always the logged-in user — prevents favouriting on behalf of another
         serializer.save(customer=self.request.user.customer_profile)
 
 
 class FavoriteDeleteView(generics.DestroyAPIView):
-    """DELETE /api/accounts/favorites/<uuid:pk>/"""
     permission_classes = [IsCustomer]
 
     def get_queryset(self):
-        return Favorite.objects.filter(
-            customer=self.request.user.customer_profile
-        )
+        return Favorite.objects.filter(customer=self.request.user.customer_profile)
 
 
 # -------------------------------------------------------
@@ -596,16 +482,10 @@ class FavoriteDeleteView(generics.DestroyAPIView):
 # -------------------------------------------------------
 
 class WorkerReviewListView(generics.ListAPIView):
-    """
-    GET /api/accounts/workers/<uuid:pk>/reviews/
-    All public reviews for a specific worker.
-    Placed here so the accounts app is self-contained for worker data.
-    """
+    """GET /api/accounts/workers/<uuid:pk>/reviews/"""
     permission_classes = [permissions.AllowAny]
 
     def get_serializer_class(self):
-        # Lazy import — bookings imports accounts (for User FK), so importing
-        # bookings at accounts module level would create a circular dependency
         from bookings.serializers import ReviewSerializer
         return ReviewSerializer
 
@@ -615,5 +495,3 @@ class WorkerReviewListView(generics.ListAPIView):
             reviewee__worker_profile__id=self.kwargs['pk'],
             is_public=True
         ).select_related('reviewer').order_by('-created_at')
-
-

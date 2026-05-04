@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SkillBridge — Settings</title>
+  <link rel="stylesheet" href="../static/css/style.css">
+  <link rel="stylesheet" href="../static/css/dashboard.css">
+  <script src="../static/js/theme.js"></script>
+  <script>
+    if (localStorage.getItem('user_role') !== 'worker') location.replace('index.html');
+  </script>
+</head>
+<body>
+  <div class="mobile-overlay" id="mobile-overlay"></div>
+
+  <!-- NAVBAR -->
+  <header class="top-navbar">
+    <a href="worker-dashboard.html" class="navbar-brand">
+      <div class="logo-mark">SB</div>
+      SkillBridge
+    </a>
+    <nav class="navbar-links" id="navbar-links">
+      <a class="nav-item" href="worker-dashboard.html">← Dashboard</a>
+      <a class="nav-item" href="update-profile.html">Edit Profile</a>
+    </nav>
+    <div class="navbar-actions">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">
+        <svg id="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg id="sun-icon" style="display:none" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+      </button>
+      <div class="profile-dropdown-container">
+        <div class="profile-trigger" id="profile-trigger">
+          <img id="nav-avatar" src="../static/images/default-avatar.png" class="user-avatar" alt="Avatar"
+            style="object-fit:cover"
+            onerror="this.style.display='none';document.getElementById('nav-initials').style.display='flex'">
+          <div id="nav-initials" class="user-avatar"
+            style="display:none;background:var(--primary);color:#fff;font-weight:700;font-size:14px;align-items:center;justify-content:center">W</div>
+        </div>
+      </div>
+      <button class="mobile-toggle" id="mobile-toggle">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main style="max-width:860px;width:100%;margin:40px auto 80px;padding:0 24px">
+
+    <div style="margin-bottom:32px">
+      <h1 style="font-size:28px;font-weight:700;margin:0 0 6px;color:var(--text)">Account Settings</h1>
+      <p style="margin:0;color:var(--muted);font-size:14px">
+        Manage your login credentials, services, and availability.
+        To update your name, photo, or bio visit
+        <a href="update-profile.html" style="color:var(--primary);font-weight:600">Edit Profile →</a>
+      </p>
+    </div>
+
+    <!-- TAB NAV -->
+    <div style="display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:32px;overflow-x:auto;scrollbar-width:none">
+      <button class="st-tab active" data-stab="stab-account">🔐 Account</button>
+      <button class="st-tab" data-stab="stab-services">🔧 Services</button>
+      <button class="st-tab" data-stab="stab-availability">📅 Availability</button>
+    </div>
+
+    <!-- ── TAB: ACCOUNT ── -->
+    <div class="st-panel active" id="stab-account">
+
+      <!-- Email -->
+      <div class="panel" style="margin-bottom:24px">
+        <div class="panel-header"><h2 class="panel-title">Email Address</h2></div>
+        <div style="padding:24px">
+          <div style="margin-bottom:20px">
+            <label class="st-label">Current Email</label>
+            <input type="email" id="s-email" class="st-input" placeholder="your@email.com">
+          </div>
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn gradient" style="width:auto;padding:11px 28px" onclick="saveEmail()">
+              Update Email
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="panel" style="margin-bottom:24px">
+        <div class="panel-header"><h2 class="panel-title">Change Password</h2></div>
+        <div style="padding:24px">
+          <div style="display:grid;gap:16px">
+            <div>
+              <label class="st-label">Current Password</label>
+              <div style="position:relative">
+                <input type="password" id="s-cur-pwd" class="st-input" placeholder="Current password" style="padding-right:44px">
+                <button type="button" onclick="togglePwd('s-cur-pwd')" class="pwd-eye">👁</button>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div>
+                <label class="st-label">New Password</label>
+                <div style="position:relative">
+                  <input type="password" id="s-new-pwd" class="st-input" placeholder="New password" style="padding-right:44px">
+                  <button type="button" onclick="togglePwd('s-new-pwd')" class="pwd-eye">👁</button>
+                </div>
+              </div>
+              <div>
+                <label class="st-label">Confirm New Password</label>
+                <div style="position:relative">
+                  <input type="password" id="s-con-pwd" class="st-input" placeholder="Confirm password" style="padding-right:44px">
+                  <button type="button" onclick="togglePwd('s-con-pwd')" class="pwd-eye">👁</button>
+                </div>
+              </div>
+            </div>
+            <!-- Strength bar -->
+            <div id="pwd-strength-wrap" style="display:none">
+              <div style="height:4px;background:var(--border);border-radius:4px;overflow:hidden">
+                <div id="pwd-strength-bar" style="height:100%;border-radius:4px;transition:width 0.3s,background 0.3s;width:0"></div>
+              </div>
+              <div id="pwd-strength-label" style="font-size:11px;margin-top:4px;color:var(--muted)"></div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:20px">
+            <button class="btn gradient" style="width:auto;padding:11px 28px" onclick="savePassword()">
+              Change Password
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="panel" style="border-color:rgba(239,68,68,0.2)">
+        <div class="panel-header" style="border-bottom-color:rgba(239,68,68,0.1)">
+          <h2 class="panel-title" style="color:#ef4444">Danger Zone</h2>
+        </div>
+        <div style="padding:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+          <div>
+            <div style="font-weight:600;font-size:14px;color:var(--text)">Deactivate Account</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:2px">Your profile will be hidden from customers.</div>
+          </div>
+          <button onclick="deactivateAccount()" style="padding:9px 20px;border-radius:8px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s"
+            onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">
+            Deactivate
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: SERVICES ── -->
+    <div class="st-panel" id="stab-services">
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">My Services</h2>
+          <button class="btn gradient" style="width:auto;padding:8px 16px;font-size:13px" onclick="addServiceRow()">
+            + Add Service
+          </button>
+        </div>
+        <div style="padding:24px">
+          <p style="margin:0 0 20px;font-size:14px;color:var(--muted)">
+            Select the service categories you offer and set price adjustments relative to your base hourly rate.
+          </p>
+          <div id="services-list"></div>
+          <div style="margin-top:20px;display:flex;justify-content:flex-end">
+            <button class="btn gradient" style="width:auto;padding:11px 28px" onclick="saveServices()">
+              Save Services
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: AVAILABILITY ── -->
+    <div class="st-panel" id="stab-availability">
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Working Hours</h2>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:13px;color:var(--muted)">Available for work</span>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+              <input type="checkbox" id="global-avail" style="opacity:0;width:0;height:0" onchange="toggleGlobalAvailability(this)">
+              <span id="avail-slider" style="position:absolute;inset:0;background:var(--border);border-radius:24px;transition:0.3s">
+                <span style="position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 4px rgba(0,0,0,0.2)"></span>
+              </span>
+            </label>
+          </div>
+        </div>
+        <div style="padding:24px">
+          <p style="margin:0 0 24px;font-size:14px;color:var(--muted)">
+            Set your weekly schedule. Customers will see when you are available to book.
+          </p>
+          <div id="availability-schedule"></div>
+          <div style="margin-top:20px;display:flex;justify-content:flex-end">
+            <button class="btn gradient" style="width:auto;padding:11px 28px" onclick="saveAvailability()">
+              Save Schedule
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast -->
+  <div id="st-toast" style="display:none;position:fixed;bottom:24px;right:24px;padding:14px 20px;
+    border-radius:12px;font-size:14px;font-weight:600;z-index:9999;
+    box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:opacity 0.3s"></div>
+
+  <script src="../static/js/config.js"></script>
+  <script src="../static/js/api.js"></script>
+  <script src="../static/js/session.js"></script>
+  <script src="../static/js/settings.js"></script>
+  <script src="../static/js/footer.js"></script>
+</body>
+</html>

@@ -2,9 +2,6 @@
 Accounts Models — Users, Worker Profiles, Customer Profiles
 
 FILE LOCATION: skillbridge/accounts/models.py
-
-These are the three core models for Phase 1.
-All other apps (bookings, payments etc.) will import from here.
 """
 
 import uuid
@@ -13,9 +10,41 @@ from django.db import models
 
 
 # -------------------------------------------------------
-# CHOICES (replaces PostgreSQL enums in Django)
-# Using TextChoices stores human-readable strings in the DB
-# e.g. role column stores 'customer', 'worker', or 'admin'
+# FILE UPLOAD PATH FUNCTIONS
+# These tell Django WHERE to save uploaded files.
+# Result: media/workers/{user_id}/profile/profile.jpg
+#         media/workers/{user_id}/portfolio/{uuid}.jpg
+#         media/workers/{user_id}/documents/cnic_front.jpg
+# -------------------------------------------------------
+
+def user_profile_photo_path(instance, filename):
+    """Profile photo → media/workers/{user_id}/profile/profile.{ext}"""
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+    return f'workers/{instance.id}/profile/profile.{ext}'
+
+
+def portfolio_photo_path(instance, filename):
+    """Portfolio photo → media/workers/{user_id}/portfolio/{uuid12}.{ext}"""
+    import uuid as _uuid
+    ext  = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+    name = _uuid.uuid4().hex[:12]
+    return f'workers/{instance.worker_profile.user.id}/portfolio/{name}.{ext}'
+
+
+def cnic_front_path(instance, filename):
+    """CNIC front → media/workers/{user_id}/documents/cnic_front.{ext}"""
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+    return f'workers/{instance.user.id}/documents/cnic_front.{ext}'
+
+
+def cnic_back_path(instance, filename):
+    """CNIC back → media/workers/{user_id}/documents/cnic_back.{ext}"""
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'jpg'
+    return f'workers/{instance.user.id}/documents/cnic_back.{ext}'
+
+
+# -------------------------------------------------------
+# CHOICES
 # -------------------------------------------------------
 
 class UserRole(models.TextChoices):
@@ -47,37 +76,20 @@ class ServiceCategory(models.TextChoices):
 
 # -------------------------------------------------------
 # CUSTOM USER MANAGER
-# Django requires a Manager class when you use a custom
-# User model. It tells Django HOW to create users.
-# We use email as the login field instead of username.
 # -------------------------------------------------------
 
 class UserManager(BaseUserManager):
 
     def create_user(self, email, password=None, **extra_fields):
-        """
-        Creates a regular user.
-        Called when a customer or worker signs up.
-        """
         if not email:
             raise ValueError('Email address is required')
-
-        # Normalise email: converts FOO@BAR.COM → foo@bar.com
         email = self.normalize_email(email)
-
-        user = self.model(email=email, **extra_fields)
-
-        # hash_password hashes the plain text password before saving.
-        # NEVER store plain text passwords.
+        user  = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        """
-        Creates an admin/superuser.
-        Called via: python manage.py createsuperuser
-        """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('role', UserRole.ADMIN)
@@ -86,78 +98,59 @@ class UserManager(BaseUserManager):
 
 # -------------------------------------------------------
 # USER MODEL
-# This replaces Django's default User model entirely.
-# We use UUID as the primary key instead of integer IDs
-# — harder to guess, safer for public-facing APIs.
 # -------------------------------------------------------
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """
-    The single unified user table for all roles.
-    A customer, worker, and admin are all rows in this table.
-    The 'role' field tells them apart.
-    """
 
-    # UUID primary key — more secure than sequential integers
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # Core identity fields
     first_name = models.CharField(max_length=80)
     last_name  = models.CharField(max_length=80)
+    email      = models.EmailField(unique=True)
+    phone      = models.CharField(max_length=20, unique=True)
 
-    # Email is used as the login username (not 'username')
-    email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=20, unique=True)
+    # ── CHANGED: TextField → ImageField with organized upload path ──
+    # Files saved to: media/workers/{user_id}/profile/profile.{ext}
+    # Old TextField is kept as a property for full backward compatibility
+    profile_photo = models.ImageField(
+        upload_to=user_profile_photo_path,
+        blank=True,
+        null=True
+    )
 
-    # Profile photo stored as a URL string (actual file lives on S3/Cloudinary)
-    profile_photo_url = models.TextField(blank=True, null=True)
-
-    # Role determines what this user can do
     role = models.CharField(
         max_length=20,
         choices=UserRole.choices,
         default=UserRole.CUSTOMER
     )
 
-    # Account health
     account_status = models.CharField(
         max_length=30,
         choices=AccountStatus.choices,
         default=AccountStatus.ACTIVE
     )
 
-    # Verification flags
     email_verified = models.BooleanField(default=False)
     phone_verified = models.BooleanField(default=False)
 
-    # OTP fields for phone/email verification
-    # otp_secret holds the 6-digit code, otp_expires_at is its expiry time
     otp_secret     = models.TextField(blank=True, null=True)
     otp_expires_at = models.DateTimeField(blank=True, null=True)
 
-    # Timestamps
     last_login_at = models.DateTimeField(blank=True, null=True)
-    created_at    = models.DateTimeField(auto_now_add=True)  # set once on creation
-    updated_at    = models.DateTimeField(auto_now=True)      # updated on every save
+    created_at    = models.DateTimeField(auto_now_add=True)
+    updated_at    = models.DateTimeField(auto_now=True)
 
-    # Required by Django's permission system
-    is_staff  = models.BooleanField(default=False)   # can access /admin/
-    is_active = models.BooleanField(default=True)    # False = soft delete
+    is_staff  = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
 
-    # Tell Django to use our custom manager
     objects = UserManager()
 
-    # Use email as the login field instead of username
     USERNAME_FIELD  = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name', 'phone']
 
     class Meta:
-        db_table = 'users'  # exact table name in PostgreSQL
-        indexes = [
+        db_table = 'users'
+        indexes  = [
             models.Index(fields=['email']),
             models.Index(fields=['phone']),
             models.Index(fields=['role']),
@@ -168,7 +161,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def full_name(self):
-        """Convenience property used in serializers and templates."""
         return f'{self.first_name} {self.last_name}'
 
     @property
@@ -179,72 +171,93 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_customer(self):
         return self.role == UserRole.CUSTOMER
 
+    # ── BACKWARD COMPAT PROPERTY ──
+    # All serializers and views that read profile_photo_url still work.
+    # Returns the relative URL like /media/workers/uuid/profile/profile.jpg
+    @property
+    def profile_photo_url(self):
+        return self.profile_photo.url if self.profile_photo else ''
+
+    # Setter so old code like `user.profile_photo_url = path` still works
+    # during migration period — it's a no-op (ImageField handles saving)
+    @profile_photo_url.setter
+    def profile_photo_url(self, value):
+        pass  # ImageField saves the file — this setter is intentionally empty
+
 
 # -------------------------------------------------------
 # WORKER PROFILE
-# Extra data specific to workers.
-# One-to-one with User — every worker has exactly one profile.
 # -------------------------------------------------------
 
 class WorkerProfile(models.Model):
-    """
-    Stores professional details for workers.
-    Created automatically when a worker completes signup.
-    """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # One worker user → one worker profile
-    # on_delete=CASCADE means if the user is deleted, their profile is too
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name='worker_profile'
-        # related_name lets you do: user.worker_profile from a User instance
     )
 
     bio              = models.TextField(blank=True, null=True)
     years_experience = models.PositiveSmallIntegerField(default=0)
 
-    # Admin must approve a worker before they appear in listings
     verification_status = models.CharField(
         max_length=20,
         choices=VerificationStatus.choices,
         default=VerificationStatus.PENDING
     )
 
-    # Pricing
     base_hourly_rate = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         help_text='Base rate in PKR per hour'
     )
 
-    # How far the worker is willing to travel (in km)
     service_radius_km = models.DecimalField(
         max_digits=5,
         decimal_places=1,
         default=10.0
     )
 
-    # Worker's home/base city (plain text for Phase 1)
-    # In Phase 4 (locations app) we will replace this with PostGIS coordinates
     city = models.CharField(max_length=100, blank=True, null=True)
 
-    # Document uploads for verification (stored as URLs)
-    cnic_front_url = models.TextField(blank=True, null=True)
-    cnic_back_url  = models.TextField(blank=True, null=True)
+    # ── CHANGED: TextField → ImageField with organized upload paths ──
+    # Files saved to: media/workers/{user_id}/documents/cnic_front.{ext}
+    cnic_front = models.ImageField(
+        upload_to=cnic_front_path,
+        blank=True,
+        null=True
+    )
+    cnic_back = models.ImageField(
+        upload_to=cnic_back_path,
+        blank=True,
+        null=True
+    )
 
-    # Availability toggle — worker can turn this on/off from their dashboard
+    # ── BACKWARD COMPAT PROPERTIES ──
+    @property
+    def cnic_front_url(self):
+        return self.cnic_front.url if self.cnic_front else ''
+
+    @cnic_front_url.setter
+    def cnic_front_url(self, value):
+        pass  # intentionally empty — ImageField handles saving
+
+    @property
+    def cnic_back_url(self):
+        return self.cnic_back.url if self.cnic_back else ''
+
+    @cnic_back_url.setter
+    def cnic_back_url(self, value):
+        pass  # intentionally empty
+
     is_available = models.BooleanField(default=True)
 
-    # Aggregated stats — updated by signals after each review/booking
-    # Storing these here avoids recalculating them on every listing request
     avg_rating           = models.DecimalField(max_digits=3, decimal_places=2, default=0)
     total_reviews        = models.PositiveIntegerField(default=0)
     total_jobs_completed = models.PositiveIntegerField(default=0)
 
-    # Admin notes (only visible in the admin panel)
     admin_notes = models.TextField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -252,7 +265,7 @@ class WorkerProfile(models.Model):
 
     class Meta:
         db_table = 'worker_profiles'
-        indexes = [
+        indexes  = [
             models.Index(fields=['verification_status']),
             models.Index(fields=['is_available']),
         ]
@@ -263,34 +276,20 @@ class WorkerProfile(models.Model):
 
 # -------------------------------------------------------
 # WORKER SERVICES
-# A worker can offer multiple service categories.
-# e.g. Hasnain offers both Plumber and Carpenter services.
-# Each category can have its own price modifier.
 # -------------------------------------------------------
 
 class WorkerService(models.Model):
-    """
-    Junction table between WorkerProfile and service categories.
-    One row per service a worker offers.
-    """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # Which worker offers this service
     worker_profile = models.ForeignKey(
         WorkerProfile,
         on_delete=models.CASCADE,
         related_name='services'
-        # related_name lets you do: worker_profile.services.all()
     )
 
-    category = models.CharField(
-        max_length=20,
-        choices=ServiceCategory.choices
-    )
+    category = models.CharField(max_length=20, choices=ServiceCategory.choices)
 
-    # % adjustment on top of the worker's base_hourly_rate for this service.
-    # 0 = no change, 20 = 20% more expensive, -10 = 10% cheaper
     price_modifier_pct = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -298,8 +297,7 @@ class WorkerService(models.Model):
     )
 
     class Meta:
-        db_table = 'worker_services'
-        # A worker can only offer each category once
+        db_table      = 'worker_services'
         unique_together = ('worker_profile', 'category')
 
     def __str__(self):
@@ -307,26 +305,16 @@ class WorkerService(models.Model):
 
     @property
     def effective_rate(self):
-        """
-        Calculates the actual rate for this specific service.
-        e.g. base=1000, modifier=20% → effective=1200 PKR/hr
-        """
-        base = self.worker_profile.base_hourly_rate
+        base     = self.worker_profile.base_hourly_rate
         modifier = self.price_modifier_pct / 100
         return round(base * (1 + modifier), 2)
 
 
 # -------------------------------------------------------
 # CUSTOMER PROFILE
-# Extra data specific to customers.
-# One-to-one with User — every customer has exactly one profile.
 # -------------------------------------------------------
 
 class CustomerProfile(models.Model):
-    """
-    Stores details specific to customers.
-    Created automatically when a customer completes signup.
-    """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -336,15 +324,8 @@ class CustomerProfile(models.Model):
         related_name='customer_profile'
     )
 
-    # Default address (plain text for Phase 1)
-    # In Phase 3 (locations app) we will add a proper address book
-    default_address = models.TextField(blank=True, null=True)
-
-    # Running count of how many bookings this customer has made
-    # Used to determine if they qualify for repeat-customer discounts (Phase 2)
-    total_bookings = models.PositiveIntegerField(default=0)
-
-    # True once the customer has made at least one completed booking
+    default_address    = models.TextField(blank=True, null=True)
+    total_bookings     = models.PositiveIntegerField(default=0)
     is_repeat_customer = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -358,20 +339,13 @@ class CustomerProfile(models.Model):
 
 
 # -------------------------------------------------------
-# AUDIT LOG (Phase 2 addition)
-# Append-only table that records every admin action.
-# Never update or delete audit records — they are evidence.
+# AUDIT LOG
 # -------------------------------------------------------
 
 class AuditLog(models.Model):
-    """
-    Records every admin action: status changes, verification decisions.
-    Append-only — admin history must never be altered.
-    """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # Who performed the action — SET_NULL so logs survive admin account changes
     admin = models.ForeignKey(
         'User',
         on_delete=models.SET_NULL,
@@ -379,10 +353,8 @@ class AuditLog(models.Model):
         related_name='audit_actions'
     )
 
-    # e.g. 'user_status_change', 'worker_verification_approved'
     action_type = models.CharField(max_length=50)
 
-    # Who was affected — null if action is not user-specific
     target_user = models.ForeignKey(
         'User',
         on_delete=models.SET_NULL,
@@ -391,9 +363,7 @@ class AuditLog(models.Model):
         related_name='audit_targets'
     )
 
-    # Stores before/after state so full history is reconstructible
-    details = models.JSONField(null=True, blank=True)
-
+    details    = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -404,22 +374,14 @@ class AuditLog(models.Model):
 
 
 # -------------------------------------------------------
-# TOOL MODELS (Phase 2 additions)
+# TOOL MODELS
 # -------------------------------------------------------
 
 class Tool(models.Model):
-    """A physical tool a worker might own (e.g. drill, wrench, multimeter)."""
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    name = models.CharField(max_length=100)
-
-    # Which trade this tool belongs to — reuses the existing ServiceCategory choices
-    # so the filter UI can show relevant tools when browsing by category
-    category = models.CharField(
-        max_length=20,
-        choices=ServiceCategory.choices
-    )
+    id       = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name     = models.CharField(max_length=100)
+    category = models.CharField(max_length=20, choices=ServiceCategory.choices)
 
     class Meta:
         db_table = 'tools'
@@ -429,7 +391,6 @@ class Tool(models.Model):
 
 
 class WorkerTool(models.Model):
-    """Junction: which tools a worker owns, with optional price adjustment."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -439,12 +400,8 @@ class WorkerTool(models.Model):
         related_name='tools'
     )
 
-    tool = models.ForeignKey(
-        Tool,
-        on_delete=models.CASCADE
-    )
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE)
 
-    # +15 means worker charges 15% more because they bring specialist tools
     price_adjustment_pct = models.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -452,16 +409,18 @@ class WorkerTool(models.Model):
     )
 
     class Meta:
-        db_table = 'worker_tools'
-        # A worker cannot list the same tool twice
+        db_table        = 'worker_tools'
         unique_together = ('worker_profile', 'tool')
 
     def __str__(self):
         return f'{self.worker_profile.user.full_name} — {self.tool.name}'
 
 
+# -------------------------------------------------------
+# WORKER PORTFOLIO PHOTO
+# -------------------------------------------------------
+
 class WorkerPortfolioPhoto(models.Model):
-    """Portfolio photos a worker uploads to showcase past work."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -471,22 +430,36 @@ class WorkerPortfolioPhoto(models.Model):
         related_name='portfolio_photos'
     )
 
-    photo_url = models.TextField()
+    # ── CHANGED: TextField → ImageField with organized upload path ──
+    # Files saved to: media/workers/{user_id}/portfolio/{uuid12}.{ext}
+    photo = models.ImageField(upload_to=portfolio_photo_path, blank=True, null=True)
 
-    # Optional caption — worker describes what the photo shows
-    caption = models.TextField(blank=True, null=True)
+    # ── NEW: order field for drag-and-drop reordering ──
+    # Lower number = shown first. First photo (order=0) = cover photo.
+    order = models.PositiveIntegerField(default=0)
 
+    caption     = models.TextField(blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'worker_portfolio_photos'
+        ordering = ['order', 'uploaded_at']  # always returned in display order
 
     def __str__(self):
         return f'Portfolio photo for {self.worker_profile.user.full_name}'
 
+    # ── BACKWARD COMPAT PROPERTY ──
+    # All serializers that read photo_url still work unchanged.
+    @property
+    def photo_url(self):
+        return self.photo.url if self.photo else ''
+
+
+# -------------------------------------------------------
+# FAVORITE
+# -------------------------------------------------------
 
 class Favorite(models.Model):
-    """A customer saving a worker to their favourites list."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -505,16 +478,18 @@ class Favorite(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'favorites'
-        # Prevents a customer from favouriting the same worker twice
+        db_table        = 'favorites'
         unique_together = ('customer', 'worker_profile')
 
     def __str__(self):
         return f'{self.customer.user.full_name} → {self.worker_profile.user.full_name}'
 
 
+# -------------------------------------------------------
+# WORKER AVAILABILITY
+# -------------------------------------------------------
+
 class WorkerAvailability(models.Model):
-    """Days and hours a worker is available each week."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -524,15 +499,12 @@ class WorkerAvailability(models.Model):
         related_name='availability'
     )
 
-    # 0=Monday, 6=Sunday — matches Python's weekday() convention
     day_of_week = models.IntegerField()
-
-    start_time = models.TimeField()
-    end_time   = models.TimeField()
+    start_time  = models.TimeField()
+    end_time    = models.TimeField()
 
     class Meta:
-        db_table = 'worker_availability'
-        # One slot per day — worker sets Mon 9am-6pm, not multiple overlapping slots
+        db_table        = 'worker_availability'
         unique_together = ('worker_profile', 'day_of_week')
 
     def __str__(self):

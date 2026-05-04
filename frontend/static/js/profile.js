@@ -149,7 +149,10 @@ function renderProfile(container, w, reviews, workerId, savedFavoriteId) {
     : parseFloat(w.avg_rating || 0).toFixed(1);
 
   const category   = services[0]?.category || '';
-  const bannerUrl  = bannerForCategory(category);
+  // Use first portfolio photo as banner — fall back to category image if no portfolio
+  const bannerUrl  = portfolio.length
+  ? `${serverBase}${portfolio[0].photo_url}`
+  : bannerForCategory(category);
   let isSaved      = !!savedFavoriteId;
   let currentFavId = savedFavoriteId;
 

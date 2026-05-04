@@ -54,7 +54,7 @@ function switchTab(sectionId) {
   if (sectionId === 'sec-earnings')  renderEarnings();
   if (sectionId === 'sec-reviews')   renderReviews();
   if (sectionId === 'sec-portfolio') renderPortfolio();
-  if (sectionId === 'sec-settings')  initSettings();
+  if (sectionId === 'sec-settings')  location.href = 'settings.html';
 }
 
 // Wire nav items
@@ -63,7 +63,7 @@ document.querySelectorAll('.nav-item[data-target]').forEach(item => {
 });
 
 // Wire dropdown links
-document.getElementById('dd-settings')?.addEventListener('click',  e => { e.preventDefault(); switchTab('sec-settings'); });
+document.getElementById('dd-settings')?.addEventListener('click',  e => { e.preventDefault(); location.href = 'settings.html'; });
 document.getElementById('dd-portfolio')?.addEventListener('click', e => { e.preventDefault(); location.href = 'update-profile.html#portfolio'; });
 document.getElementById('dd-logout')?.addEventListener('click',    e => { e.preventDefault(); localStorage.clear(); location.replace('index.html'); });
 
