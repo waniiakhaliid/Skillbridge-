@@ -30,7 +30,7 @@ body {
 /* HERO BANNER */
 .hero-banner {
   position: relative;
-  background: url('images/workers.jpeg') center/cover no-repeat;
+  background: url('../images/workers.jpeg') center/cover no-repeat;
   padding: 120px 0;
   color: white;
   min-height: 520px;

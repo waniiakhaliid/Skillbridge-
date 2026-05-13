@@ -512,7 +512,7 @@ async function renderSavedWorkers() {
   const favList = await fetchFavorites();
   if (!favList.length) {
     container.style.cssText = 'display:block';
-    container.innerHTML = emptyHTML('❤️', 'No saved workers yet', 'Tap the heart icon on any worker profile to save them here.');
+    container.innerHTML = emptyHTML('<span style="filter: saturate(0.5) opacity(0.85);">❤️</span>', 'No saved workers yet', 'Tap the heart icon on any worker profile to save them here.');
     return;
   }
   container.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-top:24px';
@@ -597,7 +597,7 @@ function savedWorkerCard(fav, compact = false) {
           background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;
           font-size:18px;flex-shrink:0;transition:all 0.2s"
           onmouseover="this.style.background='rgba(239,68,68,0.25)';this.style.transform='scale(1.1)'"
-          onmouseout="this.style.background='rgba(239,68,68,0.1)';this.style.transform='scale(1)'">❤️</button>
+          onmouseout="this.style.background='rgba(239,68,68,0.1)';this.style.transform='scale(1)'"><span style="filter: saturate(0.5) opacity(0.85);">❤️</span></button>
       </div>
     </div>`;
 }
@@ -619,7 +619,7 @@ async function unsaveWorker(favoriteId, btn) {
       const c = document.getElementById('saved-workers-list');
       if (c && !c.querySelector('[data-fav-id]')) {
         c.style.cssText = 'display:block';
-        c.innerHTML = emptyHTML('❤️', 'No saved workers yet', 'Tap the heart icon on any worker profile to save them here.');
+        c.innerHTML = emptyHTML('<span style="filter: saturate(0.5) opacity(0.85);">❤️</span>', 'No saved workers yet', 'Tap the heart icon on any worker profile to save them here.');
       }
       renderOverviewFavorites();
     }, 250);

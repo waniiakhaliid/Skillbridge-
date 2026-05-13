@@ -30,7 +30,7 @@
         <!-- Brand Column -->
         <div class="sb-footer-col sb-footer-brand">
           <div class="sb-footer-logo">
-            <div class="sb-footer-logo-mark">SB</div>
+            <img src="../static/images/static.gif" alt="SkillBridge Footer Logo" class="footer-logo-img" style="height: 70px; width: auto;">
             <span>SkillBridge</span>
           </div>
           <p class="sb-footer-tagline">Connecting skilled professionals with people who need them. Quality service, verified workers, guaranteed satisfaction.</p>

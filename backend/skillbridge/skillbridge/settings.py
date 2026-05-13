@@ -13,7 +13,116 @@ SECRET_KEY = 'django-insecure-change-this-in-production'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']  # Restrict this in production
+ALLOWED_HOSTS = ['*']
+
+
+# -------------------------------------------------------
+# JAZZMIN — SkillBridge branded admin dashboard
+# -------------------------------------------------------
+JAZZMIN_SETTINGS = {
+    # ── Branding ──────────────────────────────────────────────────────────
+    'site_title':        'SkillBridge Admin',
+    'site_header':       'SkillBridge',
+    'site_brand':        'SkillBridge',
+    'welcome_sign':      'Welcome to SkillBridge Admin',
+    'copyright':         'SkillBridge © 2025',
+    'site_logo':         'admin/img/logo.gif',
+    'login_logo':        'admin/img/logo.gif',
+    'site_logo_classes': 'img-circle',
+    'site_icon':         'admin/img/logo.gif',
+
+    # ── Theme & Colors ─────────────────────────────────────────────────────
+    # Uses AdminLTE skins — closest to SkillBridge green
+    'theme':             'darkly',     # dark elegant base
+    'dark_mode_theme':   'darkly',
+    'button_classes': {
+        'primary':   'btn-primary',
+        'secondary': 'btn-secondary',
+        'info':      'btn-info',
+        'warning':   'btn-warning',
+        'danger':    'btn-danger',
+        'success':   'btn-success',
+    },
+
+    # ── Navigation Sidebar ─────────────────────────────────────────────────
+    'topmenu_links': [
+        {'name': 'View Site',  'url': 'http://127.0.0.1:5500/frontend/templates/home.html', 'new_window': True},
+        {'name': 'Dashboard',  'url': 'admin:index'},
+    ],
+    'usermenu_links': [
+        {'name': 'View Site',  'url': 'http://127.0.0.1:5500/frontend/templates/home.html', 'new_window': True},
+    ],
+
+    # ── Sidebar App Ordering ───────────────────────────────────────────────
+    'order_with_respect_to': [
+        'accounts', 'bookings', 'auth', 'notifications', 'payments',
+        'locations', 'chatbot', 'token_blacklist',
+    ],
+
+    # ── App Icons ─────────────────────────────────────────────────────────
+    'icons': {
+        'auth':                             'fas fa-users-cog',
+        'auth.user':                        'fas fa-user',
+        'auth.Group':                       'fas fa-users',
+        'accounts.User':                    'fas fa-user-circle',
+        'accounts.CustomerProfile':         'fas fa-user-tie',
+        'accounts.WorkerProfile':           'fas fa-hard-hat',
+        'accounts.Favorites':               'fas fa-heart',
+        'bookings.Booking':                 'fas fa-calendar-check',
+        'bookings.Review':                  'fas fa-star',
+        'notifications.Notification':       'fas fa-bell',
+        'payments.Payment':                 'fas fa-credit-card',
+        'locations.Location':               'fas fa-map-marker-alt',
+        'chatbot.ChatSession':              'fas fa-comments',
+        'token_blacklist.BlacklistedToken': 'fas fa-ban',
+        'token_blacklist.OutstandingToken': 'fas fa-key',
+    },
+    'default_icon_parents':  'fas fa-folder',
+    'default_icon_children': 'fas fa-circle',
+
+    # ── UI Tweaks ──────────────────────────────────────────────────────────
+    'show_sidebar':              True,
+    'navigation_expanded':       True,
+    'hide_apps':                 [],
+    'hide_models':               [],
+    'related_modal_active':      True,
+    'custom_css':                'admin/css/skillbridge_admin.css',
+    'custom_js':                 None,
+    'use_google_fonts_cdn':      True,
+    'show_ui_builder':           False,
+}
+
+JAZZMIN_UI_TWEAKS = {
+    'navbar_small_text':        False,
+    'footer_small_text':        False,
+    'body_small_text':          False,
+    'brand_small_text':         False,
+    'brand_colour':             'navbar-success',   # SkillBridge green navbar
+    'accent':                   'accent-success',
+    'navbar':                   'navbar-dark',
+    'no_navbar_border':         True,
+    'navbar_fixed':             True,
+    'layout_boxed':             False,
+    'footer_fixed':             False,
+    'sidebar_fixed':            True,
+    'sidebar':                  'sidebar-dark-success',  # green sidebar
+    'sidebar_nav_small_text':   False,
+    'sidebar_disable_expand':   False,
+    'sidebar_nav_child_indent': True,
+    'sidebar_nav_compact_style':False,
+    'sidebar_nav_legacy_style': False,
+    'sidebar_nav_flat_style':   False,
+    'theme':                    'darkly',
+    'default_theme_mode':       'dark',
+    'button_classes': {
+        'primary':   'btn-outline-primary',
+        'secondary': 'btn-outline-secondary',
+        'info':      'btn-outline-info',
+        'warning':   'btn-warning',
+        'danger':    'btn-danger',
+        'success':   'btn-success',
+    },
+}
 
 
 # -------------------------------------------------------
@@ -22,6 +131,9 @@ ALLOWED_HOSTS = ['*']  # Restrict this in production
 # then our own SkillBridge apps.
 # -------------------------------------------------------
 INSTALLED_APPS = [
+    # jazzmin MUST come before django.contrib.admin to override its templates
+    'jazzmin',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -30,20 +142,19 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Third-party
-    'rest_framework',            # Django REST Framework for building APIs
-    'rest_framework_simplejwt',  # JWT authentication (token-based login)
-    'corsheaders',               # Allow frontend JS to call our API
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
-    # SkillBridge apps (Phase 1)
+
+    # SkillBridge apps
     'accounts',
     'bookings',
-
-    # Phase-2 additions — appended here, existing entries above untouched
-    'django_filters',   # enables ?category=plumber style query filters on list views
-    'locations',        # GPS tracking, customer address book, ETA snapshots
-    'payments',         # discount codes, instalments, payments, worker earnings
-    'notifications',    # in-app notification centre + push token storage
-    'chatbot',          # support chatbot sessions and messages
+    'django_filters',
+    'locations',
+    'payments',
+    'notifications',
+    'chatbot',
 ]
 
 MIDDLEWARE = [
@@ -173,6 +284,7 @@ USE_TZ = True                # Store all datetimes as UTC in the DB
 # STATIC FILES
 # -------------------------------------------------------
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

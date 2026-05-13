@@ -1,0 +1,610 @@
+/*
+ * SkillBridge Admin Portal — Custom CSS
+ * Exact match to frontend/static/css/style.css dark mode palette
+ *
+ * --primary:  #6C8A3D
+ * --bg:       #383737
+ * --card:     #464141
+ * --text:     #ffffff
+ * --muted:    #bbbbbb
+ * --border:   rgba(255,255,255,0.1)
+ * --footer:   #2d2d2d
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ─────────────────────────────────────────────────────────────────────────
+   GLOBAL
+   ───────────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body, .main-header, .main-sidebar, .content-wrapper,
+h1, h2, h3, h4, h5, h6, label, td, th, a, p, span,
+input, select, textarea, button, .nav-link, .brand-text,
+.info-box-text, .info-box-number, .small-box, li, div {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+body {
+  background: #383737 !important;
+  color: #fff !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TOP NAVBAR
+   ───────────────────────────────────────────────────────────────────────── */
+.main-header.navbar {
+  background: #383737 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.2) !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+}
+
+.main-header .nav-link { color: rgba(255,255,255,0.8) !important; }
+.main-header .nav-link:hover { color: #fff !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   BRAND / SIDEBAR HEADER
+   ───────────────────────────────────────────────────────────────────────── */
+.brand-link {
+  background: #4a6928 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+  padding: 10px 14px !important;
+  height: 56px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.brand-link .brand-text {
+  font-weight: 800 !important;
+  font-size: 17px !important;
+  color: #fff !important;
+  letter-spacing: -0.3px !important;
+}
+
+/* Logo — bigger, no background */
+.brand-link .brand-image,
+.brand-image {
+  max-height: 42px !important;
+  height: 42px !important;
+  width: auto !important;
+  margin-right: 12px !important;
+  background: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  margin-left: 4px !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   SIDEBAR — olive green, compact, fits screen
+   ───────────────────────────────────────────────────────────────────────── */
+aside.main-sidebar, 
+aside.main-sidebar::before,
+body.dark-mode aside.main-sidebar,
+body.dark-mode .sidebar {
+  background: linear-gradient(180deg, #4a6928 0%, #3a5220 100%) !important;
+  border-right: 1px solid rgba(255,255,255,0.15) !important;
+  width: 230px !important;
+  overflow-x: hidden !important;
+}
+
+aside.main-sidebar .sidebar {
+  background: transparent !important;
+}
+
+.sidebar { padding-top: 4px !important; }
+
+/* User panel */
+.user-panel {
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  padding: 8px 10px !important;
+}
+.user-panel .info a { color: #ddd !important; font-size: 13px !important; font-weight: 600 !important; }
+.user-panel img { width: 28px !important; height: 28px !important; }
+
+/* Nav items */
+.nav-sidebar .nav-item > .nav-link {
+  color: #bbb !important;
+  border-radius: 6px !important;
+  margin: 1px 6px !important;
+  padding: 7px 10px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.15s ease !important;
+}
+
+.nav-sidebar .nav-item > .nav-link:hover {
+  background: rgba(255,255,255,0.12) !important;
+  color: #fff !important;
+}
+
+.nav-sidebar .nav-item > .nav-link.active,
+.nav-sidebar > .nav-item.menu-open > .nav-link {
+  background: rgba(255,255,255,0.2) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+/* Nav icons */
+.nav-sidebar .nav-link i, .nav-sidebar .nav-link .nav-icon {
+  font-size: 14px !important;
+  margin-right: 8px !important;
+  width: 18px !important;
+}
+
+/* Section headers */
+.nav-sidebar .nav-header {
+  color: #6C8A3D !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1.2px !important;
+  text-transform: uppercase !important;
+  padding: 10px 14px 3px !important;
+}
+
+/* Sub-menu items */
+.nav-treeview > .nav-item > .nav-link {
+  font-size: 12.5px !important;
+  padding: 5px 10px 5px 32px !important;
+  color: #999 !important;
+}
+.nav-treeview > .nav-item > .nav-link:hover { color: #fff !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   CONTENT AREA
+   ───────────────────────────────────────────────────────────────────────── */
+.content-wrapper {
+  background: #383737 !important;
+  margin-left: 230px !important;
+  min-height: 100vh !important;
+  overflow-y: auto !important;
+}
+
+/* Force the dashboard to stack: app list on top, Recent Actions below */
+.content-wrapper .row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+
+/* Main apps column — full width */
+.content-wrapper .row > .col-sm-9,
+.content-wrapper .row > .col-md-9 {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+}
+
+/* Recent actions column — full width, stacked below */
+.content-wrapper .row > .col-sm-3,
+.content-wrapper .row > .col-md-3 {
+  flex: 0 0 100% !important;
+  max-width: 100% !important;
+  margin-top: 20px !important;
+}
+
+/* Content header */
+.content-header { padding: 12px 20px !important; }
+.content-header h1 {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+}
+
+.breadcrumb { background: transparent !important; margin: 0 !important; font-size: 12px !important; }
+.breadcrumb-item a { color: #6C8A3D !important; }
+.breadcrumb-item.active { color: #bbb !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   CARDS
+   ───────────────────────────────────────────────────────────────────────── */
+.card {
+  background: #464141 !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2) !important;
+}
+
+.card-header, .card-title {
+  background: transparent !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  padding: 12px 16px !important;
+}
+
+.card-body { padding: 12px 16px !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TABLES
+   ───────────────────────────────────────────────────────────────────────── */
+table { color: #ddd !important; }
+
+th {
+  background: rgba(108,138,61,0.1) !important;
+  color: #6C8A3D !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.6px !important;
+  text-transform: uppercase !important;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+td {
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+}
+
+tr:hover td { background: rgba(108,138,61,0.06) !important; }
+
+/* App-list links on dashboard */
+.table a, .app-list a, td a { color: #ddd !important; font-weight: 500 !important; }
+.table a:hover, .app-list a:hover, td a:hover { color: #6C8A3D !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   BUTTONS — SkillBridge green
+   ───────────────────────────────────────────────────────────────────────── */
+.btn-success, .btn-primary, .btn-info,
+a.addlink, input[type=submit], button[type=submit],
+.submit-row input[type=submit] {
+  background: #6C8A3D !important;
+  border-color: #6C8A3D !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  border-radius: 6px !important;
+  padding: 6px 14px !important;
+  transition: all 0.15s !important;
+  box-shadow: none !important;
+}
+
+.btn-success:hover, .btn-primary:hover,
+a.addlink:hover, input[type=submit]:hover {
+  background: #566e30 !important;
+  border-color: #566e30 !important;
+}
+
+.btn-outline-success { color: #6C8A3D !important; border-color: #6C8A3D !important; }
+.btn-outline-success:hover { background: #6C8A3D !important; color: #fff !important; }
+
+.btn-secondary { background: #555 !important; border-color: #555 !important; }
+.btn-danger, .deletelink { background: #EF4444 !important; border-color: #EF4444 !important; color: #fff !important; border-radius: 6px !important; }
+
+/* Change / Add links on dashboard */
+.changelink, a.changelink {
+  color: #bbb !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  border-radius: 5px !important;
+  padding: 3px 10px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  background: transparent !important;
+}
+.changelink:hover { background: rgba(108,138,61,0.15) !important; color: #fff !important; border-color: #6C8A3D !important; }
+
+.addlink {
+  font-size: 12px !important;
+  padding: 3px 10px !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   INPUTS & FORMS
+   ───────────────────────────────────────────────────────────────────────── */
+.form-control, input[type=text], input[type=email],
+input[type=password], input[type=number], input[type=url],
+input[type=search], select, textarea {
+  background: #383737 !important;
+  border: 1.5px solid rgba(255,255,255,0.12) !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  transition: border-color 0.2s !important;
+}
+
+.form-control:focus, input:focus, select:focus, textarea:focus {
+  border-color: #6C8A3D !important;
+  box-shadow: 0 0 0 3px rgba(108,138,61,0.2) !important;
+  outline: none !important;
+}
+
+label { color: #ddd !important; font-weight: 500 !important; font-size: 13px !important; }
+.help, .help-block { color: #999 !important; font-size: 11px !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LOGIN PAGE — Green branded
+   ───────────────────────────────────────────────────────────────────────── */
+.login-page {
+  background: linear-gradient(135deg, rgba(16,33,15,0.97), rgba(108,138,61,0.85)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+}
+
+.login-box {
+  width: 400px !important;
+  max-width: 92vw !important;
+}
+
+/* Logo on login page */
+.login-logo {
+  margin-bottom: 16px !important;
+}
+
+.login-logo img {
+  height: 80px !important;
+  width: auto !important;
+  display: block !important;
+  margin: 0 auto 8px !important;
+}
+
+.login-logo a, .login-logo span {
+  color: #fff !important;
+  font-weight: 800 !important;
+  font-size: 28px !important;
+  letter-spacing: -0.5px !important;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+/* Welcome text */
+.login-box-msg {
+  color: #bbb !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  margin-bottom: 16px !important;
+}
+
+.login-card-body, .card-body.login-card-body {
+  background: #464141 !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 12px !important;
+  padding: 30px !important;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4) !important;
+}
+
+/* Login inputs — straight-lined, slightly rounded */
+.login-card-body input[type=text],
+.login-card-body input[type=password],
+.login-card-body input[type=email],
+.login-card-body .form-control {
+  background: #383737 !important;
+  border: 1.5px solid rgba(255,255,255,0.15) !important;
+  border-radius: 6px !important;
+  color: #fff !important;
+  padding: 11px 14px !important;
+  font-size: 14px !important;
+}
+
+.login-card-body input:focus, .login-card-body .form-control:focus {
+  border-color: #6C8A3D !important;
+  box-shadow: 0 0 0 3px rgba(108,138,61,0.25) !important;
+}
+
+.login-card-body .input-group-text {
+  background: #383737 !important;
+  border: 1.5px solid rgba(255,255,255,0.15) !important;
+  border-right: none !important;
+  border-radius: 6px 0 0 6px !important;
+  color: #bbb !important;
+}
+
+.login-card-body .input-group .form-control {
+  border-left: none !important;
+  border-radius: 0 6px 6px 0 !important;
+}
+
+.login-card-body .btn {
+  background: #6C8A3D !important;
+  border-color: #6C8A3D !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  padding: 11px !important;
+  width: 100% !important;
+  transition: all 0.2s !important;
+}
+
+.login-card-body .btn:hover {
+  background: #566e30 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px rgba(108,138,61,0.4) !important;
+}
+
+.login-card-body p, .login-card-body a { color: #bbb !important; font-size: 13px !important; }
+.login-card-body a:hover { color: #6C8A3D !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   RECENT ACTIONS MODULE — Green themed
+   ───────────────────────────────────────────────────────────────────────── */
+#recent-actions-module {
+  background: #464141 !important;
+  border: 1px solid rgba(108,138,61,0.25) !important;
+  border-radius: 10px !important;
+  overflow: hidden !important; /* To keep the header gradient inside border-radius */
+}
+
+/* Recent actions header */
+#recent-actions-module h4 {
+  background: linear-gradient(135deg, rgba(108,138,61,0.2), rgba(108,138,61,0.08)) !important;
+  color: #fff !important;
+  border-bottom: 1px solid rgba(108,138,61,0.2) !important;
+  padding: 16px 20px !important; /* Move text right and down */
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Timeline layout fixes to stop icons cutting off on the left */
+.timeline {
+  padding: 20px 20px 20px 30px !important; /* Internal padding for the timeline area */
+  margin: 0 !important;
+}
+
+/* Timeline line */
+.timeline::before, .timeline:before {
+  background: rgba(255,255,255,0.15) !important;
+  left: 31px !important; /* Base offset */
+}
+
+/* Timeline dots/icons */
+.timeline > div > .fa,
+.timeline > div > .fas,
+.timeline > div > .far,
+.timeline > div > i,
+.timeline > div > .timeline-item::before {
+  background: #6C8A3D !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  left: 18px !important; /* Position icons correctly on the line */
+  width: 30px !important;
+  height: 30px !important;
+  font-size: 13px !important;
+  line-height: 28px !important;
+  text-align: center !important;
+}
+
+/* Timeline cards */
+.timeline > div > .timeline-item,
+.timeline-body {
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  color: #ddd !important;
+  margin-left: 60px !important; /* Push card text to the right of the icon */
+}
+
+.timeline-item .timeline-header,
+.timeline > div > .timeline-item .timeline-header {
+  border-bottom: 1px solid rgba(255,255,255,0.15) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  white-space: normal !important;
+}
+
+.timeline-item .timeline-header a {
+  color: #fff !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  display: inline-block !important;
+  max-width: 100% !important;
+}
+
+.timeline-item .timeline-header a:hover {
+  color: #6C8A3D !important;
+}
+
+.timeline .time-label span {
+  background: #6C8A3D !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  color: #fff !important;
+}
+
+/* Timeline body text */
+.timeline-body, .timeline-item .timeline-body {
+  color: #bbb !important;
+  font-size: 12px !important;
+}
+
+/* Timeline footer/links */
+.timeline-footer a { color: #6C8A3D !important; }
+.timeline-footer a:hover { color: #8aaa4d !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   FOOTER
+   ───────────────────────────────────────────────────────────────────────── */
+.main-footer {
+  background: #2d2d2d !important;
+  color: #999 !important;
+  border-top: 1px solid rgba(255,255,255,0.08) !important;
+  font-size: 12px !important;
+  padding: 8px 16px !important;
+  margin-left: 230px !important;
+}
+
+.main-footer a { color: #6C8A3D !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   CHANGELIST / FILTER SIDEBAR
+   ───────────────────────────────────────────────────────────────────────── */
+#changelist-filter {
+  background: #464141 !important;
+  border-left: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
+}
+
+#changelist-filter h2, #changelist-filter h3 {
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  padding: 10px 14px !important;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+#changelist-filter a { color: #bbb !important; font-size: 12px !important; }
+#changelist-filter li.selected a { color: #6C8A3D !important; font-weight: 700 !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PAGINATION
+   ───────────────────────────────────────────────────────────────────────── */
+.paginator a { color: #bbb !important; }
+.paginator .this-page { background: #6C8A3D !important; color: #fff !important; border-radius: 4px !important; padding: 2px 8px !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ALERTS & ERRORS
+   ───────────────────────────────────────────────────────────────────────── */
+.errornote, .errorlist li {
+  background: rgba(239,68,68,0.1) !important;
+  border: 1px solid rgba(239,68,68,0.3) !important;
+  border-radius: 6px !important;
+  color: #fca5a5 !important;
+}
+
+.messagelist .success { background: rgba(108,138,61,0.15) !important; border-left: 4px solid #6C8A3D !important; color: #fff !important; border-radius: 6px !important; }
+.messagelist .error   { background: rgba(239,68,68,0.1)  !important; border-left: 4px solid #EF4444 !important; color: #fff !important; border-radius: 6px !important; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   MISC
+   ───────────────────────────────────────────────────────────────────────── */
+.select2-container--default .select2-selection--single { background: #383737 !important; border-color: rgba(255,255,255,0.12) !important; color: #fff !important; border-radius: 6px !important; }
+.select2-dropdown { background: #464141 !important; border-color: rgba(255,255,255,0.12) !important; }
+.select2-results__option--highlighted { background: #6C8A3D !important; }
+
+/* Object tools */
+.object-tools a { background: #6C8A3D !important; border-radius: 5px !important; font-size: 11px !important; color: #fff !important; }
+.object-tools a:hover { background: #566e30 !important; }
+
+/* Submit row */
+.submit-row { background: #2d2d2d !important; border-top: 1px solid rgba(255,255,255,0.08) !important; padding: 10px 14px !important; }
+
+/* Checkbox & radio */
+input[type=checkbox], input[type=radio] { accent-color: #6C8A3D !important; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #2d2d2d; }
+::-webkit-scrollbar-thumb { background: #6C8A3D; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #8aaa4d; }
+
+/* Modal */
+.modal-content { background: #464141 !important; color: #fff !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 10px !important; }
+.modal-header { border-bottom-color: rgba(255,255,255,0.08) !important; }
+.modal-footer { border-top-color: rgba(255,255,255,0.08) !important; }
+
+/* Calendar widget */
+.calendarbox, .calendarnav { background: #464141 !important; color: #fff !important; }
+.calendar td a { color: #6C8A3D !important; }
+.calendar td.today a { background: #6C8A3D !important; color: #fff !important; }

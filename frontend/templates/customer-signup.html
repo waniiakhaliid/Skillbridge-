@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta property="og:image" content="../static/images/static.gif">
   <title>SkillBridge — Customer Signup</title>
   <link rel="stylesheet" href="../static/css/style.css">
   <link rel="stylesheet" href="../static/css/auth.css">
@@ -76,13 +77,19 @@
     <div class="auth-panel-form">
       <div class="auth-card" style="max-width:480px">
         <!-- Back Link -->
-        <a href="role-selection.html" style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:600;margin-bottom:24px;font-size:14px">
+        <a href="role-selection.html" style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-weight:600;margin-bottom:12px;font-size:14px">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           Back to Roles
         </a>
 
-        <h1 style="margin:0 0 8px;font-size:32px;letter-spacing:-0.5px">Create an Account</h1>
-        <p class="muted" style="margin-bottom:24px;font-size:15px">Sign up to start hiring professional skill workers.</p>
+        <!-- Logo -->
+        <div style="display:flex;align-items:center;gap:0px;margin-bottom:12px">
+          <img src="../static/images/static.gif" alt="SkillBridge Logo" class="logo-static" style="height: 80px; margin-right: -10px;">
+          <div class="brand" style="font-weight:800;font-size:32px;color:var(--text)">SkillBridge</div>
+        </div>
+
+        <h1 style="margin:0 0 4px;font-size:32px;letter-spacing:-0.5px">Create an Account</h1>
+        <p class="muted" style="margin-bottom:16px;font-size:15px">Sign up to start hiring professional skill workers.</p>
 
         <form id="customer-signup-form">
           <!-- Full Name -->
@@ -152,7 +159,7 @@
           <div class="error" id="signup-error" style="margin-top:-10px;margin-bottom:10px"></div>
 
           <!-- Submit -->
-          <button id="submit-signup" type="submit" class="btn gradient" style="padding:14px;font-size:16px">Create Account</button>
+          <button id="submit-signup" type="submit" class="btn gradient" style="padding:12px;font-size:16px">Create Account</button>
         </form>
 
         <p style="text-align:center;margin-top:24px;color:var(--muted);font-size:15px">

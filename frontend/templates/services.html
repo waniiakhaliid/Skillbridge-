@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta property="og:image" content="../static/images/static.gif">
   <title>SkillBridge — Detailed Services</title>
   <link rel="stylesheet" href="../static/css/style.css">
   <link rel="stylesheet" href="../static/css/home.css">
@@ -14,9 +15,10 @@
     .services-page-header {
       padding: 100px 0 60px;
       text-align: center;
-      background: var(--nav-bg);
+      background: linear-gradient(135deg, rgba(16, 33, 15, 0.95), rgba(108, 138, 61, 0.85));
       border-bottom: 1px solid var(--border);
       position: relative;
+      color: white;
     }
 
     .services-page-header h1 {
@@ -24,11 +26,12 @@
       font-weight: 800;
       margin-bottom: 12px;
       letter-spacing: -1px;
+      color: white;
     }
 
     .services-page-header .subtitle {
       font-size: 20px;
-      color: var(--muted);
+      color: rgba(255, 255, 255, 0.9);
       max-width: 700px;
       margin: 0 auto;
     }
@@ -193,8 +196,10 @@
     <!-- Left: Brand & Main Links -->
     <div style="display: flex; align-items: center; gap: 24px;">
       <a href="home.html" class="navbar-brand">
-        <div class="logo-mark">SB</div>
-        SkillBridge
+        <div class="nav-logo-container">
+          <img src="../static/images/static.gif" alt="SkillBridge Logo" class="logo-static">
+        </div>
+        <span class="navbar-brand-text">SkillBridge</span>
       </a>
       <nav class="navbar-links">
         <a class="nav-item" href="home.html">Home</a>

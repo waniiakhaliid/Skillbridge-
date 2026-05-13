@@ -207,7 +207,7 @@ function renderProfile(container, w, reviews, workerId, savedFavoriteId) {
                   style="padding:10px 22px;font-size:14px;border-radius:8px;font-weight:600;
                   cursor:pointer;border:1.5px solid var(--border);background:transparent;
                   color:var(--text);display:flex;align-items:center;gap:6px;transition:all 0.2s">
-                  <span id="save-icon">${isSaved?'❤️':'🤍'}</span>
+                  <span id="save-icon">${isSaved?'<span style="filter: saturate(0.5) opacity(0.85);">❤️</span>':'🤍'}</span>
                   <span id="save-label">${isSaved?'Saved':'Save'}</span>
                 </button>
                 <button class="btn gradient"
@@ -380,7 +380,7 @@ function renderProfile(container, w, reviews, workerId, savedFavoriteId) {
       if (res.ok || res.status === 201) {
         const data = await res.json();
         isSaved = true; currentFavId = data.id;
-        document.getElementById('save-icon').textContent = '❤️';
+        document.getElementById('save-icon').textContent = '<span style="filter: saturate(0.5) opacity(0.85);">❤️</span>';
         document.getElementById('save-label').textContent = 'Saved';
         showProfileToast('✅ Worker saved!');
       } else {
